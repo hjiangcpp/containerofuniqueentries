@@ -1,10 +1,10 @@
 #pragma once
 
-#include <functional>  // For std::hash
+#include <functional> // For std::hash
 #include <initializer_list>
-#include <optional>  // For std::nullopt
+#include <optional> // For std::nullopt
 #include <unordered_set>
-#include <utility>  // For std::swap
+#include <utility> // For std::swap
 #include <vector>
 
 #if __cplusplus >= 201703L
@@ -17,7 +17,7 @@ namespace containerofunique {
 
 template <class T, class Hash = std::hash<T>, class KeyEqual = std::equal_to<T>>
 class vector_of_unique {
- public:
+public:
   // *Member types
   using value_type = T;
   using key_type = T;
@@ -35,8 +35,7 @@ class vector_of_unique {
   // Constructor
   vector_of_unique() NOEXCEPT_CXX17 = default;
 
-  template <class input_it>
-  vector_of_unique(input_it first, input_it last) {
+  template <class input_it> vector_of_unique(input_it first, input_it last) {
     _push_back(first, last);
   }
 
@@ -59,8 +58,7 @@ class vector_of_unique {
     return *this;
   }
 
-  template <class input_it>
-  void assign(input_it first, input_it last) {
+  template <class input_it> void assign(input_it first, input_it last) {
     clear();
     _push_back(first, last);
   }
@@ -158,8 +156,7 @@ class vector_of_unique {
   }
 
 #if __cplusplus < 201703L
-  template <class... Args>
-  void emplace_back(Args &&...args) {
+  template <class... Args> void emplace_back(Args &&...args) {
     if (set_.emplace(args...).second) {
       vector_.emplace_back(std::forward<Args>(args)...);
     }
@@ -199,8 +196,7 @@ class vector_of_unique {
     return false;
   }
 
-  template <class input_it>
-  void _push_back(input_it first, input_it last) {
+  template <class input_it> void _push_back(input_it first, input_it last) {
     while (first != last) {
       push_back(*first++);
     }
@@ -219,7 +215,7 @@ class vector_of_unique {
     return any_added;
   }
 
-  void swap(vector_of_unique &other) {
+  void swap(vector_of_unique &other) NOEXCEPT_CXX17 {
     vector_.swap(other.vector_);
     set_.swap(other.set_);
   }
@@ -242,8 +238,7 @@ class vector_of_unique {
     return cend();
   }
 #else
-  template <class K>
-  const_iterator find(const K &x) const {
+  template <class K> const_iterator find(const K &x) const {
     auto it = cbegin();
     while (it != cend()) {
       if (*it == x) {
@@ -258,8 +253,7 @@ class vector_of_unique {
 #if __cplusplus > 202002L
   bool contains(const key_type &key) const { return set_.contains(key); }
 
-  template <class K>
-  bool contains(const K &x) const {
+  template <class K> bool contains(const K &x) const {
     return set_.contains(x);
   }
 #endif
@@ -271,17 +265,17 @@ class vector_of_unique {
   const VectorType &vector() const { return vector_; }
   const UnorderedSetType &set() const { return set_; }
 
- private:
+private:
   VectorType vector_;
   UnorderedSetType set_;
-};  // class vector_of_unique
+}; // class vector_of_unique
 
 // Non-member function
 #if __cplusplus >= 202002L && __cplusplus < 202600L
 template <class T, class Hash = std::hash<T>, class KeyEqual = std::equal_to<T>,
           class U>
-typename vector_of_unique<T, Hash, KeyEqual>::size_type erase(
-    vector_of_unique<T, Hash, KeyEqual> &c, const U &value) {
+typename vector_of_unique<T, Hash, KeyEqual>::size_type
+erase(vector_of_unique<T, Hash, KeyEqual> &c, const U &value) {
   auto it = c.find(value);
   if (it != c.cend()) {
     c.erase(it);
@@ -292,8 +286,8 @@ typename vector_of_unique<T, Hash, KeyEqual>::size_type erase(
 #else
 template <class T, class Hash = std::hash<T>, class KeyEqual = std::equal_to<T>,
           class U = T>
-typename vector_of_unique<T, Hash, KeyEqual>::size_type erase(
-    vector_of_unique<T, Hash, KeyEqual> &c, const U &value) {
+typename vector_of_unique<T, Hash, KeyEqual>::size_type
+erase(vector_of_unique<T, Hash, KeyEqual> &c, const U &value) {
   auto it = c.find(value);
   if (it != c.cend()) {
     c.erase(it);
@@ -305,8 +299,8 @@ typename vector_of_unique<T, Hash, KeyEqual>::size_type erase(
 
 template <class T, class Hash = std::hash<T>, class KeyEqual = std::equal_to<T>,
           class Pred>
-typename vector_of_unique<T, Hash, KeyEqual>::size_type erase_if(
-    vector_of_unique<T, Hash, KeyEqual> &c, Pred pred) {
+typename vector_of_unique<T, Hash, KeyEqual>::size_type
+erase_if(vector_of_unique<T, Hash, KeyEqual> &c, Pred pred) {
   auto it = c.cbegin();
   typename vector_of_unique<T, Hash, KeyEqual>::size_type r = 0;
   while (it != c.cend()) {
@@ -365,4 +359,4 @@ auto operator<=>(const vector_of_unique<T, Hash, KeyEqual> &lhs,
   return (lhs.vector() <=> rhs.vector());
 }
 #endif
-};  // namespace containerofunique
+}; // namespace containerofunique
