@@ -28,6 +28,7 @@ class deque_of_unique {
   using unordered_set_type = std::unordered_set<T, Hash, KeyEqual>;
   using size_type = typename deque_type::size_type;
   using const_iterator = typename deque_type::const_iterator;
+  using iterator = const_iterator;
   using reverse_iterator = typename deque_type::reverse_iterator;
   using const_reverse_iterator = typename deque_type::const_reverse_iterator;
 
@@ -79,6 +80,9 @@ class deque_of_unique {
   // Iterators
   const_iterator cbegin() const noexcept { return deque_.cbegin(); }
   const_iterator cend() const noexcept { return deque_.cend(); }
+
+  iterator begin() const noexcept { return deque_.cbegin(); }
+  iterator end() const noexcept { return deque_.cend(); }
 
   const_reverse_iterator crbegin() const noexcept { return deque_.crbegin(); }
   const_reverse_iterator crend() const noexcept { return deque_.crend(); }

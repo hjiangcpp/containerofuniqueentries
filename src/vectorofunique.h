@@ -28,6 +28,7 @@ class vector_of_unique {
   using UnorderedSetType = std::unordered_set<T, Hash, KeyEqual>;
   using size_type = typename VectorType::size_type;
   using const_iterator = typename VectorType::const_iterator;
+  using iterator = const_iterator;
   using reverse_iterator = typename VectorType::reverse_iterator;
   using const_reverse_iterator = typename VectorType::const_reverse_iterator;
 
@@ -79,6 +80,9 @@ class vector_of_unique {
   // Iterators
   const_iterator cbegin() const noexcept { return vector_.cbegin(); }
   const_iterator cend() const noexcept { return vector_.cend(); }
+
+  iterator begin() const noexcept { return vector_.cbegin(); }
+  iterator end() const noexcept { return vector_.cend(); }
 
   const_reverse_iterator crbegin() const noexcept { return vector_.crbegin(); }
   const_reverse_iterator crend() const noexcept { return vector_.crend(); }
