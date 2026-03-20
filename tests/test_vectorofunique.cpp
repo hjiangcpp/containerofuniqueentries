@@ -24,6 +24,13 @@ TEST(VectorOfUniqueTest, DefaultConstructor) {
   EXPECT_THAT(vou.set(), ::testing::UnorderedElementsAreArray(emptyset));
 }
 
+TEST(VectorOfUniqueTest, ConstructorFromEmptyRange) {
+  std::vector<int> empty;
+  vector_of_unique<int> vou(empty.begin(), empty.end());
+  EXPECT_TRUE(vou.empty());
+  EXPECT_TRUE(vou.set().empty());
+}
+
 TEST(VectorOfUniqueTest, ConstructorInitializesFromIterators) {
   std::vector<int> vec1 = {3, 1, 2, 3, 4, 5};
   std::vector<int> vec2 = {3, 1, 2, 4, 5};
@@ -106,6 +113,14 @@ TEST(VectorOfUniqueTest, MoveConstructor) {
   EXPECT_EQ(vou2.vector(), vec);
 }
 
+TEST(VectorOfUniqueTest, MoveConstructor_SourceIsEmpty) {
+  vector_of_unique<int> vou1 = {1, 2, 3, 4};
+  vector_of_unique<int> vou2(std::move(vou1));
+  EXPECT_EQ(vou2.vector(), std::vector<int>({1, 2, 3, 4}));
+  EXPECT_TRUE(vou1.empty());
+  EXPECT_TRUE(vou1.set().empty());
+}
+
 TEST(VectorOfUniqueTest, CopyAssignmentOperator) {
   vector_of_unique<int> vou1 = {1, 2, 3, 4};
   vector_of_unique<int> vou2 = vou1;
@@ -162,6 +177,16 @@ TEST(VectorOfUniqueTest, InitializerListAssignmentOperator) {
   EXPECT_EQ(vou.vector(), vec);
   EXPECT_THAT(std::vector<int>(vou.set().begin(), vou.set().end()),
               ::testing::UnorderedElementsAreArray(vec));
+}
+
+TEST(VectorOfUniqueTest, InitializerListAssignment_OverwritesNonEmpty) {
+  vector_of_unique<int> vou = {1, 2, 3};
+  vou = {4, 5, 6};
+  EXPECT_EQ(vou.vector(), std::vector<int>({4, 5, 6}));
+  EXPECT_EQ(vou.size(), 3);
+  EXPECT_FALSE(vou.find(1) != vou.cend());
+  EXPECT_FALSE(vou.find(2) != vou.cend());
+  EXPECT_FALSE(vou.find(3) != vou.cend());
 }
 
 TEST(VectorOfUniqueTest, AssignEmptyRange) {

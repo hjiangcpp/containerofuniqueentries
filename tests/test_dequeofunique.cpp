@@ -24,6 +24,13 @@ TEST(DequeOfUniqueTest, DefaultConstructor) {
   EXPECT_THAT(dou.set(), ::testing::UnorderedElementsAreArray(emptyset));
 }
 
+TEST(DequeOfUniqueTest, ConstructorFromEmptyRange) {
+  std::deque<int> empty;
+  deque_of_unique<int> dou(empty.begin(), empty.end());
+  EXPECT_TRUE(dou.empty());
+  EXPECT_TRUE(dou.set().empty());
+}
+
 TEST(DequeOfUniqueTest, ConstructorInitializesFromIterators) {
   std::deque<int> dq1 = {3, 1, 2, 3, 4, 5};
   std::deque<int> dq2 = {3, 1, 2, 4, 5};
@@ -106,6 +113,14 @@ TEST(DequeOfUniqueTest, MoveConstructor) {
   EXPECT_EQ(dou2.deque(), dq);
 }
 
+TEST(DequeOfUniqueTest, MoveConstructor_SourceIsEmpty) {
+  deque_of_unique<int> dou1 = {1, 2, 3, 4};
+  deque_of_unique<int> dou2(std::move(dou1));
+  EXPECT_EQ(dou2.deque(), std::deque<int>({1, 2, 3, 4}));
+  EXPECT_TRUE(dou1.empty());
+  EXPECT_TRUE(dou1.set().empty());
+}
+
 TEST(DequeOfUniqueTest, CopyAssignmentOperator) {
   deque_of_unique<int> dou1 = {1, 2, 3, 4};
   deque_of_unique<int> dou2 = dou1;
@@ -162,6 +177,16 @@ TEST(DequeOfUniqueTest, InitializerListAssignmentOperator) {
   EXPECT_EQ(dou.deque(), dq);
   EXPECT_THAT(std::deque<int>(dou.set().begin(), dou.set().end()),
               ::testing::UnorderedElementsAreArray(dq));
+}
+
+TEST(DequeOfUniqueTest, InitializerListAssignment_OverwritesNonEmpty) {
+  deque_of_unique<int> dou = {1, 2, 3};
+  dou = {4, 5, 6};
+  EXPECT_EQ(dou.deque(), std::deque<int>({4, 5, 6}));
+  EXPECT_EQ(dou.size(), 3);
+  EXPECT_FALSE(dou.find(1) != dou.cend());
+  EXPECT_FALSE(dou.find(2) != dou.cend());
+  EXPECT_FALSE(dou.find(3) != dou.cend());
 }
 
 TEST(DequeOfUniqueTest, AssignEmptyRange) {
