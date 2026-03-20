@@ -257,7 +257,7 @@ class vector_of_unique {
   }
 #endif
 
-#if __cplusplus > 202002L
+#if __cplusplus >= 202002L
   bool contains(const key_type &key) const { return set_.contains(key); }
 
   template <class K>
