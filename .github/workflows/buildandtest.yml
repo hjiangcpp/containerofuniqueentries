@@ -19,8 +19,14 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Cache apt packages
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/apt/archives
+          key: apt-clang-tidy-${{ runner.os }}
+
       - name: Install Clang-Tidy
-        run: sudo apt-get update && sudo apt-get install -y clang-tidy bear
+        run: sudo apt-get update && sudo apt-get install -y clang-tidy
 
       - name: Print compiler version
         run: |
@@ -32,7 +38,7 @@ jobs:
           mkdir build
           cd build
           cmake ..
-          make
+          make -j$(nproc)
           echo "Running tests for C++14"
           ./test_cxx14_deque
           ./test_cxx14_vector
@@ -45,7 +51,10 @@ jobs:
           echo "Running tests for C++23"
           ./test_cxx23_deque
           ./test_cxx23_vector
-          find ../ \( -name '*.cpp' -o -name '*.h' \) \
-          -not \( -path '*/build/*' -o -path '*/thirdparty/*' \) \
-          -exec clang-tidy -p=. --config-file=../.clang-tidy -extra-arg=-Wunused-variable {} + \
-          -print | grep "warning" && exit 1 || exit 0
+
+      - name: Run clang-tidy
+        run: |
+          run-clang-tidy -p build -j$(nproc) \
+            -extra-arg=-Wunused-variable \
+            -files '(src|tests)/.*\.(cpp|h)' \
+          2>&1 | grep "warning" && exit 1 || exit 0
