@@ -565,6 +565,20 @@ TEST(VectorOfUniqueTest, Clear) {
   EXPECT_THAT(vou.set(), ::testing::UnorderedElementsAre());
 }
 
+TEST(VectorOfUniqueTest, Erase_ReturnsNextIterator) {
+  vector_of_unique<int> vou = {1, 2, 3, 4, 5};
+  auto it = vou.erase(vou.cbegin());
+  EXPECT_EQ(*it, 2);
+}
+
+TEST(VectorOfUniqueTest, Erase_LastElement_ReturnsEnd) {
+  vector_of_unique<int> vou = {1, 2, 3};
+  auto it = vou.erase(vou.cend() - 1);
+  EXPECT_EQ(it, vou.cend());
+  EXPECT_EQ(vou.size(), 2);
+  EXPECT_EQ(vou.back(), 2);
+}
+
 TEST(VectorOfUniqueTest, Erase_SingleElement) {
   vector_of_unique<int> vou = {1, 2, 3, 4, 5};
   std::vector<int> expected_vector = {2, 3, 4, 5};

@@ -564,6 +564,20 @@ TEST(DequeOfUniqueTest, Clear) {
   EXPECT_THAT(dou.set(), ::testing::UnorderedElementsAre());
 }
 
+TEST(DequeOfUniqueTest, Erase_ReturnsNextIterator) {
+  deque_of_unique<int> dou = {1, 2, 3, 4, 5};
+  auto it = dou.erase(dou.cbegin());
+  EXPECT_EQ(*it, 2);
+}
+
+TEST(DequeOfUniqueTest, Erase_LastElement_ReturnsEnd) {
+  deque_of_unique<int> dou = {1, 2, 3};
+  auto it = dou.erase(dou.cend() - 1);
+  EXPECT_EQ(it, dou.cend());
+  EXPECT_EQ(dou.size(), 2);
+  EXPECT_EQ(dou.back(), 2);
+}
+
 TEST(DequeOfUniqueTest, Erase_SingleElement) {
   deque_of_unique<int> dou = {1, 2, 3, 4, 5};
   std::deque<int> expected_deque = {2, 3, 4, 5};
