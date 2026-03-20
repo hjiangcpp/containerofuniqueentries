@@ -724,6 +724,16 @@ TEST(VectorOfUniqueTest, InsertAtSpecificPosition) {
             (std::vector<std::string>{"hello", "goodbye", "world"}));
 }
 
+TEST(VectorOfUniqueTest, Insert_DuplicateRvalue_SourceNotMoved) {
+  vector_of_unique<std::string> vou = {"hello", "world"};
+  std::string str = "hello";
+  auto result = vou.insert(vou.cbegin(), std::move(str));
+  EXPECT_FALSE(result.second);
+  // NOLINTNEXTLINE(bugprone-use-after-move,-warnings-as-errors)
+  EXPECT_EQ(str, "hello");
+  EXPECT_EQ(vou.vector(), (std::vector<std::string>{"hello", "world"}));
+}
+
 TEST(VectorOfUniqueTest, EmplaceIntoEmpty) {
   vector_of_unique<std::string> vou;
   std::vector<std::string> vec;

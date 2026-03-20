@@ -722,6 +722,16 @@ TEST(DequeOfUniqueTest, InsertAtSpecificPosition) {
             (std::deque<std::string>{"hello", "goodbye", "world"}));
 }
 
+TEST(DequeOfUniqueTest, Insert_DuplicateRvalue_SourceNotMoved) {
+  deque_of_unique<std::string> dou = {"hello", "world"};
+  std::string str = "hello";
+  auto result = dou.insert(dou.cbegin(), std::move(str));
+  EXPECT_FALSE(result.second);
+  // NOLINTNEXTLINE(bugprone-use-after-move,-warnings-as-errors)
+  EXPECT_EQ(str, "hello");
+  EXPECT_EQ(dou.deque(), (std::deque<std::string>{"hello", "world"}));
+}
+
 TEST(DequeOfUniqueTest, EmplaceIntoEmpty) {
   deque_of_unique<std::string> dou;
   std::deque<std::string> dq;
