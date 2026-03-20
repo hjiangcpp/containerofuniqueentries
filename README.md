@@ -119,3 +119,13 @@ Or run individual test binaries:
 ./test_cxx20_vector
 ./test_cxx20_deque
 ```
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
+
+If you use this library in your project, a mention of the original author ([hjiangcpp](https://github.com/hjiangcpp)) in your documentation or credits is appreciated.
+
+## Acknowledgements
+
+Development of this project was assisted by [Claude Code](https://claude.ai/claude-code), Anthropic's AI coding tool.
