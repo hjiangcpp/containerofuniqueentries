@@ -56,5 +56,5 @@ jobs:
         run: |
           run-clang-tidy -p build -j$(nproc) \
             -extra-arg=-Wunused-variable \
-            '/(src|tests)/.*\.(cpp|h)$' \
-          2>&1 | grep "warning" && exit 1 || exit 0
+            -warnings-as-errors='*' \
+            'src/|tests/'
