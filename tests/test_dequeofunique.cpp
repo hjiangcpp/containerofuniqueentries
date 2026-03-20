@@ -492,6 +492,37 @@ TEST(DequeOfUniqueTest, Iterator_ModificationNotAllowed) {
       std::is_const<std::remove_reference_t<decltype(*const_it)>>::value);
 }
 
+TEST(DequeOfUniqueTest, BeginEnd_Iteration) {
+  deque_of_unique<int> dou = {1, 2, 3, 4};
+
+  auto it = dou.begin();
+  EXPECT_EQ(*it, 1);
+  ++it;
+  EXPECT_EQ(*it, 2);
+  ++it;
+  EXPECT_EQ(*it, 3);
+  ++it;
+  EXPECT_EQ(*it, 4);
+  ++it;
+  EXPECT_EQ(it, dou.end());
+}
+
+TEST(DequeOfUniqueTest, BeginEnd_RangeBasedFor) {
+  deque_of_unique<int> dou = {1, 2, 3, 4};
+  std::deque<int> result;
+  for (const auto &x : dou) {
+    result.push_back(x);
+  }
+  EXPECT_EQ(result, (std::deque<int>{1, 2, 3, 4}));
+}
+
+TEST(DequeOfUniqueTest, BeginEnd_ConstCorrectness) {
+  deque_of_unique<int> dou = {1, 2, 3, 4};
+  // NOLINTNEXTLINE(modernize-type-traits)
+  EXPECT_TRUE(
+      std::is_const<std::remove_reference_t<decltype(*dou.begin())>>::value);
+}
+
 TEST(DequeOfUniqueTest, Clear) {
   deque_of_unique<int> dou = {1, 2, 3, 4, 5};
   static_assert(noexcept(dou.clear()), "clear() should be noexcept.");

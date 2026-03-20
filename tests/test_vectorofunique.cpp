@@ -494,6 +494,37 @@ TEST(VectorOfUniqueTest, Iterator_ModificationNotAllowed) {
       std::is_const<std::remove_reference_t<decltype(*const_it)>>::value);
 }
 
+TEST(VectorOfUniqueTest, BeginEnd_Iteration) {
+  vector_of_unique<int> vou = {1, 2, 3, 4};
+
+  auto it = vou.begin();
+  EXPECT_EQ(*it, 1);
+  ++it;
+  EXPECT_EQ(*it, 2);
+  ++it;
+  EXPECT_EQ(*it, 3);
+  ++it;
+  EXPECT_EQ(*it, 4);
+  ++it;
+  EXPECT_EQ(it, vou.end());
+}
+
+TEST(VectorOfUniqueTest, BeginEnd_RangeBasedFor) {
+  vector_of_unique<int> vou = {1, 2, 3, 4};
+  std::vector<int> result;
+  for (const auto &x : vou) {
+    result.push_back(x);
+  }
+  EXPECT_EQ(result, (std::vector<int>{1, 2, 3, 4}));
+}
+
+TEST(VectorOfUniqueTest, BeginEnd_ConstCorrectness) {
+  vector_of_unique<int> vou = {1, 2, 3, 4};
+  // NOLINTNEXTLINE(modernize-type-traits)
+  EXPECT_TRUE(
+      std::is_const<std::remove_reference_t<decltype(*vou.begin())>>::value);
+}
+
 TEST(VectorOfUniqueTest, Clear) {
   vector_of_unique<int> vou = {1, 2, 3, 4, 5};
   vou.clear();
