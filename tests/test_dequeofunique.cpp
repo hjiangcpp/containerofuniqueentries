@@ -1345,7 +1345,7 @@ TEST(DequeOfUniqueTest, Find) {
   EXPECT_EQ(it_str_not_found, dou_str.cend());
 }
 
-#if __cplusplus > 202002L  // After C++20
+#if __cplusplus >= 202002L  // C++20 or later
 TEST(DequeOfUniqueTest, ContainsKeyType) {
   deque_of_unique<int> dou = {1, 2, 3};
 

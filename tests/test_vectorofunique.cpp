@@ -1118,7 +1118,7 @@ TEST(VectorOfUniqueTest, Find) {
   EXPECT_EQ(it_str_not_found, vou_str.cend());
 }
 
-#if __cplusplus > 202002L  // After C++20
+#if __cplusplus >= 202002L  // C++20 or later
 TEST(VectorOfUniqueTest, ContainsKeyType) {
   vector_of_unique<int> vou = {1, 2, 3};
 
