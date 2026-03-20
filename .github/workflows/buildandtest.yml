@@ -1,0 +1,51 @@
+name: build_test_clang-tidy
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    name: Build and Run Tests
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.1.1
+        with:
+          submodules: recursive
+
+      - name: Install Clang-Tidy
+        run: sudo apt-get update && sudo apt-get install -y clang-tidy bear
+
+      - name: Print compiler version
+        run: |
+          g++ --version
+          clang --version
+
+      - name: Build and run tests
+        run: |
+          mkdir build
+          cd build
+          cmake ..
+          make
+          echo "Running tests for C++14"
+          ./test_cxx14_deque
+          ./test_cxx14_vector
+          echo "Running tests for C++17"
+          ./test_cxx17_deque
+          ./test_cxx17_vector
+          echo "Running tests for C++20"
+          ./test_cxx20_deque
+          ./test_cxx20_vector
+          echo "Running tests for C++23"
+          ./test_cxx23_deque
+          ./test_cxx23_vector
+          find ../ \( -name '*.cpp' -o -name '*.h' \) \
+          -not \( -path '*/build/*' -o -path '*/thirdparty/*' \) \
+          -exec clang-tidy -p=. --config-file=../.clang-tidy -extra-arg=-Wunused-variable {} + \
+          -print | grep "warning" && exit 1 || exit 0
