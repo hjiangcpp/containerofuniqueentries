@@ -38,13 +38,13 @@ jobs:
           ./test_cxx14_vector
           echo "Running tests for C++17"
           ./test_cxx17_deque
-          ./test_cxx14_vector
+          ./test_cxx17_vector
           echo "Running tests for C++20"
           ./test_cxx20_deque
-          ./test_cxx14_vector
+          ./test_cxx20_vector
           echo "Running tests for C++23"
           ./test_cxx23_deque
-          ./test_cxx14_vector
+          ./test_cxx23_vector
           find ../ \( -name '*.cpp' -o -name '*.h' \) \
           -not \( -path '*/build/*' -o -path '*/thirdparty/*' \) \
           -exec clang-tidy -p=. --config-file=../.clang-tidy -extra-arg=-Wunused-variable {} + \
