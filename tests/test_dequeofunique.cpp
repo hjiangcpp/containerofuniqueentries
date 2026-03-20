@@ -1111,6 +1111,19 @@ TEST(DequeOfUniqueTest, PushFront_Rvalue) {
   EXPECT_THAT(dou.set(), ::testing::UnorderedElementsAreArray(expected));
 }
 
+TEST(DequeOfUniqueTest, PushFront_DuplicateRvalue) {
+  deque_of_unique<std::string> dou = {"hello", "world"};
+  std::deque<std::string> expected = {"hello", "world"};
+
+  // Duplicate rvalue: push_front should fail and leave str intact
+  std::string str = "hello";
+  bool result = dou.push_front(std::move(str));
+  EXPECT_FALSE(result);
+  EXPECT_EQ(str, "hello");
+  EXPECT_EQ(dou.deque(), expected);
+  EXPECT_THAT(dou.set(), ::testing::UnorderedElementsAreArray(expected));
+}
+
 TEST(DequeOfUniqueTest, PushFront_EmptyRvalue) {
   deque_of_unique<std::string> dou = {"hello", "world"};
   std::deque<std::string> expected = {"", "hello", "world"};
@@ -1154,6 +1167,19 @@ TEST(DequeOfUniqueTest, PushBack_Rvalue) {
   std::string str = "good";
   bool result = dou.push_back(std::move(str));
   EXPECT_TRUE(result);  // Should return true
+  EXPECT_EQ(dou.deque(), expected);
+  EXPECT_THAT(dou.set(), ::testing::UnorderedElementsAreArray(expected));
+}
+
+TEST(DequeOfUniqueTest, PushBack_DuplicateRvalue) {
+  deque_of_unique<std::string> dou = {"hello", "world"};
+  std::deque<std::string> expected = {"hello", "world"};
+
+  // Duplicate rvalue: push_back should fail and leave str intact
+  std::string str = "hello";
+  bool result = dou.push_back(std::move(str));
+  EXPECT_FALSE(result);
+  EXPECT_EQ(str, "hello");
   EXPECT_EQ(dou.deque(), expected);
   EXPECT_THAT(dou.set(), ::testing::UnorderedElementsAreArray(expected));
 }

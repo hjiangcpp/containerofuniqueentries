@@ -939,6 +939,19 @@ TEST(VectorOfUniqueTest, PushBack_Rvalue) {
   EXPECT_THAT(vou.set(), ::testing::UnorderedElementsAreArray(expected));
 }
 
+TEST(VectorOfUniqueTest, PushBack_DuplicateRvalue) {
+  vector_of_unique<std::string> vou = {"hello", "world"};
+  std::vector<std::string> expected = {"hello", "world"};
+
+  // Duplicate rvalue: push_back should fail and leave str intact
+  std::string str = "hello";
+  bool result = vou.push_back(std::move(str));
+  EXPECT_FALSE(result);
+  EXPECT_EQ(str, "hello");
+  EXPECT_EQ(vou.vector(), expected);
+  EXPECT_THAT(vou.set(), ::testing::UnorderedElementsAreArray(expected));
+}
+
 TEST(VectorOfUniqueTest, PushBack_EmptyRvalue) {
   vector_of_unique<std::string> vou = {"hello", "world"};
   std::vector<std::string> expected = {"hello", "world", ""};
