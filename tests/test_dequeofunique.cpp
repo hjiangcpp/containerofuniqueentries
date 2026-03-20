@@ -24,6 +24,13 @@ TEST(DequeOfUniqueTest, DefaultConstructor) {
   EXPECT_THAT(dou.set(), ::testing::UnorderedElementsAreArray(emptyset));
 }
 
+TEST(DequeOfUniqueTest, ConstructorFromEmptyRange) {
+  std::deque<int> empty;
+  deque_of_unique<int> dou(empty.begin(), empty.end());
+  EXPECT_TRUE(dou.empty());
+  EXPECT_TRUE(dou.set().empty());
+}
+
 TEST(DequeOfUniqueTest, ConstructorInitializesFromIterators) {
   std::deque<int> dq1 = {3, 1, 2, 3, 4, 5};
   std::deque<int> dq2 = {3, 1, 2, 4, 5};
@@ -106,6 +113,16 @@ TEST(DequeOfUniqueTest, MoveConstructor) {
   EXPECT_EQ(dou2.deque(), dq);
 }
 
+TEST(DequeOfUniqueTest, MoveConstructor_SourceIsEmpty) {
+  deque_of_unique<int> dou1 = {1, 2, 3, 4};
+  deque_of_unique<int> dou2(std::move(dou1));
+  EXPECT_EQ(dou2.deque(), std::deque<int>({1, 2, 3, 4}));
+  // NOLINTNEXTLINE(bugprone-use-after-move,clang-analyzer-cplusplus.Move,-warnings-as-errors)
+  EXPECT_TRUE(dou1.empty());
+  // NOLINTNEXTLINE(bugprone-use-after-move,clang-analyzer-cplusplus.Move,-warnings-as-errors)
+  EXPECT_TRUE(dou1.set().empty());
+}
+
 TEST(DequeOfUniqueTest, CopyAssignmentOperator) {
   deque_of_unique<int> dou1 = {1, 2, 3, 4};
   deque_of_unique<int> dou2 = dou1;
@@ -162,6 +179,16 @@ TEST(DequeOfUniqueTest, InitializerListAssignmentOperator) {
   EXPECT_EQ(dou.deque(), dq);
   EXPECT_THAT(std::deque<int>(dou.set().begin(), dou.set().end()),
               ::testing::UnorderedElementsAreArray(dq));
+}
+
+TEST(DequeOfUniqueTest, InitializerListAssignment_OverwritesNonEmpty) {
+  deque_of_unique<int> dou = {1, 2, 3};
+  dou = {4, 5, 6};
+  EXPECT_EQ(dou.deque(), std::deque<int>({4, 5, 6}));
+  EXPECT_EQ(dou.size(), 3);
+  EXPECT_FALSE(dou.find(1) != dou.cend());
+  EXPECT_FALSE(dou.find(2) != dou.cend());
+  EXPECT_FALSE(dou.find(3) != dou.cend());
 }
 
 TEST(DequeOfUniqueTest, AssignEmptyRange) {
@@ -523,6 +550,13 @@ TEST(DequeOfUniqueTest, BeginEnd_ConstCorrectness) {
       std::is_const<std::remove_reference_t<decltype(*dou.begin())>>::value);
 }
 
+TEST(DequeOfUniqueTest, Clear_EmptyContainer) {
+  deque_of_unique<int> dou;
+  EXPECT_NO_THROW(dou.clear());
+  EXPECT_TRUE(dou.empty());
+  EXPECT_TRUE(dou.set().empty());
+}
+
 TEST(DequeOfUniqueTest, Clear) {
   deque_of_unique<int> dou = {1, 2, 3, 4, 5};
   static_assert(noexcept(dou.clear()), "clear() should be noexcept.");
@@ -530,6 +564,20 @@ TEST(DequeOfUniqueTest, Clear) {
   EXPECT_NO_THROW(dou.clear());
   EXPECT_EQ(dou.deque().size(), 0);
   EXPECT_THAT(dou.set(), ::testing::UnorderedElementsAre());
+}
+
+TEST(DequeOfUniqueTest, Erase_ReturnsNextIterator) {
+  deque_of_unique<int> dou = {1, 2, 3, 4, 5};
+  auto it = dou.erase(dou.cbegin());
+  EXPECT_EQ(*it, 2);
+}
+
+TEST(DequeOfUniqueTest, Erase_LastElement_ReturnsEnd) {
+  deque_of_unique<int> dou = {1, 2, 3};
+  auto it = dou.erase(dou.cend() - 1);
+  EXPECT_EQ(it, dou.cend());
+  EXPECT_EQ(dou.size(), 2);
+  EXPECT_EQ(dou.back(), 2);
 }
 
 TEST(DequeOfUniqueTest, Erase_SingleElement) {
@@ -695,6 +743,16 @@ TEST(DequeOfUniqueTest, InsertAtSpecificPosition) {
   EXPECT_EQ(result.second, true);
   EXPECT_EQ(dou.deque(),
             (std::deque<std::string>{"hello", "goodbye", "world"}));
+}
+
+TEST(DequeOfUniqueTest, Insert_DuplicateRvalue_SourceNotMoved) {
+  deque_of_unique<std::string> dou = {"hello", "world"};
+  std::string str = "hello";
+  auto result = dou.insert(dou.cbegin(), std::move(str));
+  EXPECT_FALSE(result.second);
+  // NOLINTNEXTLINE(bugprone-use-after-move,-warnings-as-errors)
+  EXPECT_EQ(str, "hello");
+  EXPECT_EQ(dou.deque(), (std::deque<std::string>{"hello", "world"}));
 }
 
 TEST(DequeOfUniqueTest, EmplaceIntoEmpty) {
@@ -1135,6 +1193,15 @@ TEST(DequeOfUniqueTest, PushFront_EmptyRvalue) {
   EXPECT_TRUE(result);
   EXPECT_EQ(dou.deque(), expected);
   EXPECT_THAT(dou.set(), ::testing::UnorderedElementsAreArray(expected));
+}
+
+TEST(DequeOfUniqueTest, PushFront_EmptyContainer) {
+  deque_of_unique<std::string> dou;
+  bool result = dou.push_front("hello");
+  EXPECT_TRUE(result);
+  EXPECT_EQ(dou.size(), 1);
+  EXPECT_EQ(dou.front(), "hello");
+  EXPECT_THAT(dou.set(), ::testing::UnorderedElementsAre("hello"));
 }
 
 TEST(DequeOfUniqueTest, PushBack_NewElement) {
@@ -1579,4 +1646,10 @@ TEST(DequeOfUniqueTest, EraseIfWithComplexPredicate) {
   EXPECT_EQ(dou.size(), 2);
   EXPECT_TRUE(dou.find("banana") == dou.cend());
   EXPECT_TRUE(dou.find("cherry") == dou.cend());
+}
+
+TEST(DequeOfUniqueTest, EraseIf_RemainingElementsPreserveOrder) {
+  deque_of_unique<int> dou = {1, 2, 3, 4, 5, 6};
+  erase_if(dou, [](int x) { return x % 2 == 0; });
+  EXPECT_EQ(dou.deque(), std::deque<int>({1, 3, 5}));
 }

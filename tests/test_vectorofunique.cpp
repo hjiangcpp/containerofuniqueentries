@@ -24,6 +24,13 @@ TEST(VectorOfUniqueTest, DefaultConstructor) {
   EXPECT_THAT(vou.set(), ::testing::UnorderedElementsAreArray(emptyset));
 }
 
+TEST(VectorOfUniqueTest, ConstructorFromEmptyRange) {
+  std::vector<int> empty;
+  vector_of_unique<int> vou(empty.begin(), empty.end());
+  EXPECT_TRUE(vou.empty());
+  EXPECT_TRUE(vou.set().empty());
+}
+
 TEST(VectorOfUniqueTest, ConstructorInitializesFromIterators) {
   std::vector<int> vec1 = {3, 1, 2, 3, 4, 5};
   std::vector<int> vec2 = {3, 1, 2, 4, 5};
@@ -106,6 +113,16 @@ TEST(VectorOfUniqueTest, MoveConstructor) {
   EXPECT_EQ(vou2.vector(), vec);
 }
 
+TEST(VectorOfUniqueTest, MoveConstructor_SourceIsEmpty) {
+  vector_of_unique<int> vou1 = {1, 2, 3, 4};
+  vector_of_unique<int> vou2(std::move(vou1));
+  EXPECT_EQ(vou2.vector(), std::vector<int>({1, 2, 3, 4}));
+  // NOLINTNEXTLINE(bugprone-use-after-move,clang-analyzer-cplusplus.Move,-warnings-as-errors)
+  EXPECT_TRUE(vou1.empty());
+  // NOLINTNEXTLINE(bugprone-use-after-move,clang-analyzer-cplusplus.Move,-warnings-as-errors)
+  EXPECT_TRUE(vou1.set().empty());
+}
+
 TEST(VectorOfUniqueTest, CopyAssignmentOperator) {
   vector_of_unique<int> vou1 = {1, 2, 3, 4};
   vector_of_unique<int> vou2 = vou1;
@@ -162,6 +179,16 @@ TEST(VectorOfUniqueTest, InitializerListAssignmentOperator) {
   EXPECT_EQ(vou.vector(), vec);
   EXPECT_THAT(std::vector<int>(vou.set().begin(), vou.set().end()),
               ::testing::UnorderedElementsAreArray(vec));
+}
+
+TEST(VectorOfUniqueTest, InitializerListAssignment_OverwritesNonEmpty) {
+  vector_of_unique<int> vou = {1, 2, 3};
+  vou = {4, 5, 6};
+  EXPECT_EQ(vou.vector(), std::vector<int>({4, 5, 6}));
+  EXPECT_EQ(vou.size(), 3);
+  EXPECT_FALSE(vou.find(1) != vou.cend());
+  EXPECT_FALSE(vou.find(2) != vou.cend());
+  EXPECT_FALSE(vou.find(3) != vou.cend());
 }
 
 TEST(VectorOfUniqueTest, AssignEmptyRange) {
@@ -525,12 +552,33 @@ TEST(VectorOfUniqueTest, BeginEnd_ConstCorrectness) {
       std::is_const<std::remove_reference_t<decltype(*vou.begin())>>::value);
 }
 
+TEST(VectorOfUniqueTest, Clear_EmptyContainer) {
+  vector_of_unique<int> vou;
+  EXPECT_NO_THROW(vou.clear());
+  EXPECT_TRUE(vou.empty());
+  EXPECT_TRUE(vou.set().empty());
+}
+
 TEST(VectorOfUniqueTest, Clear) {
   vector_of_unique<int> vou = {1, 2, 3, 4, 5};
   vou.clear();
 
   EXPECT_EQ(vou.vector().size(), 0);
   EXPECT_THAT(vou.set(), ::testing::UnorderedElementsAre());
+}
+
+TEST(VectorOfUniqueTest, Erase_ReturnsNextIterator) {
+  vector_of_unique<int> vou = {1, 2, 3, 4, 5};
+  auto it = vou.erase(vou.cbegin());
+  EXPECT_EQ(*it, 2);
+}
+
+TEST(VectorOfUniqueTest, Erase_LastElement_ReturnsEnd) {
+  vector_of_unique<int> vou = {1, 2, 3};
+  auto it = vou.erase(vou.cend() - 1);
+  EXPECT_EQ(it, vou.cend());
+  EXPECT_EQ(vou.size(), 2);
+  EXPECT_EQ(vou.back(), 2);
 }
 
 TEST(VectorOfUniqueTest, Erase_SingleElement) {
@@ -697,6 +745,16 @@ TEST(VectorOfUniqueTest, InsertAtSpecificPosition) {
   EXPECT_EQ(result.second, true);
   EXPECT_EQ(vou.vector(),
             (std::vector<std::string>{"hello", "goodbye", "world"}));
+}
+
+TEST(VectorOfUniqueTest, Insert_DuplicateRvalue_SourceNotMoved) {
+  vector_of_unique<std::string> vou = {"hello", "world"};
+  std::string str = "hello";
+  auto result = vou.insert(vou.cbegin(), std::move(str));
+  EXPECT_FALSE(result.second);
+  // NOLINTNEXTLINE(bugprone-use-after-move,-warnings-as-errors)
+  EXPECT_EQ(str, "hello");
+  EXPECT_EQ(vou.vector(), (std::vector<std::string>{"hello", "world"}));
 }
 
 TEST(VectorOfUniqueTest, EmplaceIntoEmpty) {
@@ -1338,4 +1396,10 @@ TEST(VectorOfUniqueTest, EraseIfWithComplexPredicate) {
   EXPECT_EQ(vou.size(), 2);
   EXPECT_TRUE(vou.find("banana") == vou.cend());
   EXPECT_TRUE(vou.find("cherry") == vou.cend());
+}
+
+TEST(VectorOfUniqueTest, EraseIf_RemainingElementsPreserveOrder) {
+  vector_of_unique<int> vou = {1, 2, 3, 4, 5, 6};
+  erase_if(vou, [](int x) { return x % 2 == 0; });
+  EXPECT_EQ(vou.vector(), std::vector<int>({1, 3, 5}));
 }
