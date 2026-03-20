@@ -241,6 +241,7 @@ class deque_of_unique {
     return true;
   }
 
+ private:
   template <class input_it>
   void _push_back(input_it first, input_it last) {
     while (first != last) {
@@ -261,6 +262,7 @@ class deque_of_unique {
     return any_added;
   }
 
+ public:
   void swap(deque_of_unique &other) NOEXCEPT_CXX17 {
     deque_.swap(other.deque_);
     set_.swap(other.set_);

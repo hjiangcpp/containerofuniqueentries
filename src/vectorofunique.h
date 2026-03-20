@@ -201,6 +201,7 @@ class vector_of_unique {
     return true;
   }
 
+ private:
   template <class input_it>
   void _push_back(input_it first, input_it last) {
     while (first != last) {
@@ -221,6 +222,7 @@ class vector_of_unique {
     return any_added;
   }
 
+ public:
   void swap(vector_of_unique &other) NOEXCEPT_CXX17 {
     vector_.swap(other.vector_);
     set_.swap(other.set_);
