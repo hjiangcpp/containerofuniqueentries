@@ -117,7 +117,9 @@ TEST(DequeOfUniqueTest, MoveConstructor_SourceIsEmpty) {
   deque_of_unique<int> dou1 = {1, 2, 3, 4};
   deque_of_unique<int> dou2(std::move(dou1));
   EXPECT_EQ(dou2.deque(), std::deque<int>({1, 2, 3, 4}));
+  // NOLINTNEXTLINE(bugprone-use-after-move,clang-analyzer-cplusplus.Move,-warnings-as-errors)
   EXPECT_TRUE(dou1.empty());
+  // NOLINTNEXTLINE(bugprone-use-after-move,clang-analyzer-cplusplus.Move,-warnings-as-errors)
   EXPECT_TRUE(dou1.set().empty());
 }
 

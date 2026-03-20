@@ -117,7 +117,9 @@ TEST(VectorOfUniqueTest, MoveConstructor_SourceIsEmpty) {
   vector_of_unique<int> vou1 = {1, 2, 3, 4};
   vector_of_unique<int> vou2(std::move(vou1));
   EXPECT_EQ(vou2.vector(), std::vector<int>({1, 2, 3, 4}));
+  // NOLINTNEXTLINE(bugprone-use-after-move,clang-analyzer-cplusplus.Move,-warnings-as-errors)
   EXPECT_TRUE(vou1.empty());
+  // NOLINTNEXTLINE(bugprone-use-after-move,clang-analyzer-cplusplus.Move,-warnings-as-errors)
   EXPECT_TRUE(vou1.set().empty());
 }
 
