@@ -550,6 +550,13 @@ TEST(VectorOfUniqueTest, BeginEnd_ConstCorrectness) {
       std::is_const<std::remove_reference_t<decltype(*vou.begin())>>::value);
 }
 
+TEST(VectorOfUniqueTest, Clear_EmptyContainer) {
+  vector_of_unique<int> vou;
+  EXPECT_NO_THROW(vou.clear());
+  EXPECT_TRUE(vou.empty());
+  EXPECT_TRUE(vou.set().empty());
+}
+
 TEST(VectorOfUniqueTest, Clear) {
   vector_of_unique<int> vou = {1, 2, 3, 4, 5};
   vou.clear();
@@ -1373,4 +1380,10 @@ TEST(VectorOfUniqueTest, EraseIfWithComplexPredicate) {
   EXPECT_EQ(vou.size(), 2);
   EXPECT_TRUE(vou.find("banana") == vou.cend());
   EXPECT_TRUE(vou.find("cherry") == vou.cend());
+}
+
+TEST(VectorOfUniqueTest, EraseIf_RemainingElementsPreserveOrder) {
+  vector_of_unique<int> vou = {1, 2, 3, 4, 5, 6};
+  erase_if(vou, [](int x) { return x % 2 == 0; });
+  EXPECT_EQ(vou.vector(), std::vector<int>({1, 3, 5}));
 }

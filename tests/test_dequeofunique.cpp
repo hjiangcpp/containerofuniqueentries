@@ -548,6 +548,13 @@ TEST(DequeOfUniqueTest, BeginEnd_ConstCorrectness) {
       std::is_const<std::remove_reference_t<decltype(*dou.begin())>>::value);
 }
 
+TEST(DequeOfUniqueTest, Clear_EmptyContainer) {
+  deque_of_unique<int> dou;
+  EXPECT_NO_THROW(dou.clear());
+  EXPECT_TRUE(dou.empty());
+  EXPECT_TRUE(dou.set().empty());
+}
+
 TEST(DequeOfUniqueTest, Clear) {
   deque_of_unique<int> dou = {1, 2, 3, 4, 5};
   static_assert(noexcept(dou.clear()), "clear() should be noexcept.");
@@ -1623,4 +1630,10 @@ TEST(DequeOfUniqueTest, EraseIfWithComplexPredicate) {
   EXPECT_EQ(dou.size(), 2);
   EXPECT_TRUE(dou.find("banana") == dou.cend());
   EXPECT_TRUE(dou.find("cherry") == dou.cend());
+}
+
+TEST(DequeOfUniqueTest, EraseIf_RemainingElementsPreserveOrder) {
+  deque_of_unique<int> dou = {1, 2, 3, 4, 5, 6};
+  erase_if(dou, [](int x) { return x % 2 == 0; });
+  EXPECT_EQ(dou.deque(), std::deque<int>({1, 3, 5}));
 }
