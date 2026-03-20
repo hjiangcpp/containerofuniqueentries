@@ -1162,6 +1162,15 @@ TEST(DequeOfUniqueTest, PushFront_EmptyRvalue) {
   EXPECT_THAT(dou.set(), ::testing::UnorderedElementsAreArray(expected));
 }
 
+TEST(DequeOfUniqueTest, PushFront_EmptyContainer) {
+  deque_of_unique<std::string> dou;
+  bool result = dou.push_front("hello");
+  EXPECT_TRUE(result);
+  EXPECT_EQ(dou.size(), 1);
+  EXPECT_EQ(dou.front(), "hello");
+  EXPECT_THAT(dou.set(), ::testing::UnorderedElementsAre("hello"));
+}
+
 TEST(DequeOfUniqueTest, PushBack_NewElement) {
   deque_of_unique<std::string> dou = {"hello", "world"};
   std::deque<std::string> expected = {"hello", "world", "good"};
