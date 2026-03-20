@@ -93,10 +93,10 @@ class deque_of_unique {
     set_.clear();
   }
 
+  // Precondition: pos must be a valid and dereferenceable iterator of this
+  // container (i.e. pos != cend()). Violating this is undefined behaviour,
+  // matching the contract of std::deque::erase.
   const_iterator erase(const_iterator pos) {
-    if (deque_.empty()) {
-      return deque_.cend();
-    }
     set_.erase(*pos);
     return deque_.erase(pos);
   }

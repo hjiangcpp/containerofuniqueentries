@@ -590,12 +590,6 @@ TEST(DequeOfUniqueTest, Erase_SingleElement) {
   EXPECT_THAT(dou.set(), ::testing::UnorderedElementsAreArray(expected_set));
 }
 
-TEST(DequeOfUniqueTest, Erase_FromEmptyContainer) {
-  deque_of_unique<int> dou;
-  EXPECT_NO_THROW(dou.erase(dou.cbegin()));
-  EXPECT_EQ(dou.deque().size(), 0);
-}
-
 TEST(DequeOfUniqueTest, EraseEmptyRange) {
   deque_of_unique<int> dou1 = {1, 2, 3, 4, 5, 6};
   std::deque<int> dq2 = {1, 2, 3, 4, 5, 6};

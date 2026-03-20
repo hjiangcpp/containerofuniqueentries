@@ -591,12 +591,6 @@ TEST(VectorOfUniqueTest, Erase_SingleElement) {
   EXPECT_THAT(vou.set(), ::testing::UnorderedElementsAreArray(expected_set));
 }
 
-TEST(VectorOfUniqueTest, Erase_FromEmptyContainer) {
-  vector_of_unique<int> vou;
-  EXPECT_NO_THROW(vou.erase(vou.cbegin()));
-  EXPECT_EQ(vou.vector().size(), 0);
-}
-
 TEST(VectorOfUniqueTest, EraseEmptyRange) {
   vector_of_unique<int> vou1 = {1, 2, 3, 4, 5, 6};
   std::vector<int> vec2 = {1, 2, 3, 4, 5, 6};
