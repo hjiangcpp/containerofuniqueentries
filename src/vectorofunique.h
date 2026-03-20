@@ -177,8 +177,8 @@ class vector_of_unique {
   void pop_back() {
     if (!vector_.empty()) {
       const auto &f = vector_.back();
-      vector_.pop_back();
       set_.erase(f);
+      vector_.pop_back();
     }
   }
 

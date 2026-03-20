@@ -194,16 +194,16 @@ class deque_of_unique {
   void pop_front() {
     if (!deque_.empty()) {
       const auto &f = deque_.front();
-      deque_.pop_front();
       set_.erase(f);
+      deque_.pop_front();
     }
   }
 
   void pop_back() {
     if (!deque_.empty()) {
       const auto &f = deque_.back();
-      deque_.pop_back();
       set_.erase(f);
+      deque_.pop_back();
     }
   }
 
