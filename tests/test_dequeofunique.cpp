@@ -1119,6 +1119,7 @@ TEST(DequeOfUniqueTest, PushFront_DuplicateRvalue) {
   std::string str = "hello";
   bool result = dou.push_front(std::move(str));
   EXPECT_FALSE(result);
+  // NOLINTNEXTLINE(bugprone-use-after-move,-warnings-as-errors)
   EXPECT_EQ(str, "hello");
   EXPECT_EQ(dou.deque(), expected);
   EXPECT_THAT(dou.set(), ::testing::UnorderedElementsAreArray(expected));
@@ -1179,6 +1180,7 @@ TEST(DequeOfUniqueTest, PushBack_DuplicateRvalue) {
   std::string str = "hello";
   bool result = dou.push_back(std::move(str));
   EXPECT_FALSE(result);
+  // NOLINTNEXTLINE(bugprone-use-after-move,-warnings-as-errors)
   EXPECT_EQ(str, "hello");
   EXPECT_EQ(dou.deque(), expected);
   EXPECT_THAT(dou.set(), ::testing::UnorderedElementsAreArray(expected));

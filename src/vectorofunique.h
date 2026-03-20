@@ -195,7 +195,7 @@ class vector_of_unique {
   }
 
   bool push_back(T &&value) {
-    if (set_.count(value) > 0) return false;
+    if (set_.count(value) > 0) { return false; }
     set_.insert(value);
     vector_.push_back(std::move(value));
     return true;
@@ -236,7 +236,7 @@ class vector_of_unique {
 // Look up
 #if __cplusplus < 202002L
   const_iterator find(const T &x) const {
-    if (set_.count(x) == 0) return cend();
+    if (set_.count(x) == 0) { return cend(); }
     auto it = cbegin();
     while (it != cend()) {
       if (*it == x) {
@@ -249,7 +249,7 @@ class vector_of_unique {
 #else
   template <class K>
   const_iterator find(const K &x) const {
-    if (set_.count(x) == 0) return cend();
+    if (set_.count(x) == 0) { return cend(); }
     auto it = cbegin();
     while (it != cend()) {
       if (*it == x) {

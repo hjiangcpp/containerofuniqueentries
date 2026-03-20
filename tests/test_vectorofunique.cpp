@@ -947,6 +947,7 @@ TEST(VectorOfUniqueTest, PushBack_DuplicateRvalue) {
   std::string str = "hello";
   bool result = vou.push_back(std::move(str));
   EXPECT_FALSE(result);
+  // NOLINTNEXTLINE(bugprone-use-after-move,-warnings-as-errors)
   EXPECT_EQ(str, "hello");
   EXPECT_EQ(vou.vector(), expected);
   EXPECT_THAT(vou.set(), ::testing::UnorderedElementsAreArray(expected));
