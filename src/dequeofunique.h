@@ -352,9 +352,8 @@ typename deque_of_unique<T, Hash, KeyEqual>::size_type erase_if(
   auto it = c.cbegin();
   typename deque_of_unique<T, Hash, KeyEqual>::size_type r = 0;
   while (it != c.cend()) {
-    auto find_it = std::find_if(it, c.cend(), pred);
-    if (find_it != c.cend()) {
-      it = c.erase(find_it);
+    if (pred(*it)) {
+      it = c.erase(it);
       ++r;
     } else {
       ++it;
