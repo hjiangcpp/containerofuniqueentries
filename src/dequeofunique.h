@@ -216,12 +216,10 @@ class deque_of_unique {
   }
 
   bool push_front(T &&value) {
-    auto temp = std::move(value);
-    if (set_.insert(temp).second) {
-      deque_.push_front(std::move(temp));
-      return true;
-    }
-    return false;
+    if (set_.count(value) > 0) return false;
+    set_.insert(value);
+    deque_.push_front(std::move(value));
+    return true;
   }
 
   bool push_back(const T &value) {
@@ -233,12 +231,10 @@ class deque_of_unique {
   }
 
   bool push_back(T &&value) {
-    auto temp = std::move(value);
-    if (set_.insert(temp).second) {
-      deque_.push_back(std::move(temp));
-      return true;
-    }
-    return false;
+    if (set_.count(value) > 0) return false;
+    set_.insert(value);
+    deque_.push_back(std::move(value));
+    return true;
   }
 
   template <class input_it>
