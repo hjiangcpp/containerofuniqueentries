@@ -279,9 +279,10 @@ class vector_of_unique {
     if (set_.count(x) == 0) {
       return cend();
     }
+    KeyEqual eq{};
     auto it = cbegin();
     while (it != cend()) {
-      if (*it == x) {
+      if (eq(*it, x)) {
         return it;
       }
       it++;

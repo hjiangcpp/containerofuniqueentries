@@ -1523,14 +1523,19 @@ TEST(DequeOfUniqueTest, Find_HeterogeneousLookup) {
 }
 
 // Negative: find<K>/contains<K> are not available without Hash::is_transparent.
+// Use a type with no implicit conversion to std::string so the non-transparent
+// find(const T&) overload cannot accept it via implicit conversion.
+struct DequeOpaqueKey {
+  std::string value;
+  explicit DequeOpaqueKey(const char* s) : value(s) {}
+};
 template <typename C, typename K>
 concept DequeCanFindWith = requires(const C& c, K k) { c.find(k); };
 template <typename C, typename K>
 concept DequeCanContainsWith = requires(const C& c, K k) { c.contains(k); };
+static_assert(!DequeCanFindWith<deque_of_unique<std::string>, DequeOpaqueKey>);
 static_assert(
-    !DequeCanFindWith<deque_of_unique<std::string>, std::string_view>);
-static_assert(
-    !DequeCanContainsWith<deque_of_unique<std::string>, std::string_view>);
+    !DequeCanContainsWith<deque_of_unique<std::string>, DequeOpaqueKey>);
 #endif
 
 TEST(DequeOfUniqueTest, NonmemberEraseWithStrings) {

@@ -248,9 +248,15 @@ class deque_of_unique {
 #if __cplusplus >= 202302L
   template <std::ranges::input_range R>
   void prepend_range(R&& rng) {
+    // Collect elements not already in the container, deduplicating within the
+    // range while preserving first-occurrence order, then prepend in reverse.
+    std::unordered_set<std::ranges::range_value_t<R>, Hash, KeyEqual> pending;
     std::deque<std::ranges::range_value_t<R>> tmp;
-    for (auto&& v : std::forward<R>(rng))
-      tmp.push_back(std::forward<decltype(v)>(v));
+    for (auto&& v : std::forward<R>(rng)) {
+      if (set_.count(v) == 0 && pending.insert(v).second) {
+        tmp.push_back(v);
+      }
+    }
     for (auto it = tmp.rbegin(); it != tmp.rend(); ++it)
       push_front(std::move(*it));
   }
@@ -330,9 +336,10 @@ class deque_of_unique {
     if (set_.count(x) == 0) {
       return cend();
     }
+    KeyEqual eq{};
     auto it = cbegin();
     while (it != cend()) {
-      if (*it == x) {
+      if (eq(*it, x)) {
         return it;
       }
       it++;

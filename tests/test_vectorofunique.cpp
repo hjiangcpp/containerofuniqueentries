@@ -1273,14 +1273,20 @@ TEST(VectorOfUniqueTest, Find_HeterogeneousLookup) {
 }
 
 // Negative: find<K>/contains<K> are not available without Hash::is_transparent.
+// Use a type with no implicit conversion to std::string so the non-transparent
+// find(const T&) overload cannot accept it via implicit conversion.
+struct VectorOpaqueKey {
+  std::string value;
+  explicit VectorOpaqueKey(const char* s) : value(s) {}
+};
 template <typename C, typename K>
 concept VectorCanFindWith = requires(const C& c, K k) { c.find(k); };
 template <typename C, typename K>
 concept VectorCanContainsWith = requires(const C& c, K k) { c.contains(k); };
 static_assert(
-    !VectorCanFindWith<vector_of_unique<std::string>, std::string_view>);
+    !VectorCanFindWith<vector_of_unique<std::string>, VectorOpaqueKey>);
 static_assert(
-    !VectorCanContainsWith<vector_of_unique<std::string>, std::string_view>);
+    !VectorCanContainsWith<vector_of_unique<std::string>, VectorOpaqueKey>);
 #endif
 
 TEST(VectorOfUniqueTest, NonmemberEraseWithStrings) {
