@@ -316,7 +316,7 @@ class deque_of_unique {
     if (set_.count(x) == 0) {
       return cend();
     }
-    KeyEqual eq{};
+    auto eq = set_.key_eq();
     auto it = cbegin();
     while (it != cend()) {
       if (eq(*it, x)) {
