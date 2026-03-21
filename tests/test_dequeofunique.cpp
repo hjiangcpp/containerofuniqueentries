@@ -8,6 +8,7 @@
 #include <deque>
 #include <numeric>
 #include <stdexcept>
+#include <string_view>
 #include <unordered_set>
 #include <utility>
 
@@ -1491,6 +1492,40 @@ TEST(DequeOfUniqueTest, ContainsWithVariousIntTypes) {
   EXPECT_TRUE(dou.contains(int16_t(1)));
   EXPECT_FALSE(dou.contains(int16_t(4)));
 }
+
+// Heterogeneous lookup requires Hash::is_transparent.
+struct StringHash {
+  using is_transparent = void;
+  size_t operator()(std::string_view sv) const {
+    return std::hash<std::string_view>{}(sv);
+  }
+};
+
+struct StringEqual {
+  using is_transparent = void;
+  bool operator()(std::string_view a, std::string_view b) const { return a == b; }
+};
+
+// Positive: find<K> and contains<K> are available with a transparent Hash.
+TEST(DequeOfUniqueTest, Find_HeterogeneousLookup) {
+  deque_of_unique<std::string, StringHash, StringEqual> dou = {"hello", "world"};
+  std::string_view sv_found = "hello";
+  std::string_view sv_missing = "foo";
+
+  EXPECT_NE(dou.find(sv_found), dou.cend());
+  EXPECT_EQ(*dou.find(sv_found), "hello");
+  EXPECT_EQ(dou.find(sv_missing), dou.cend());
+  EXPECT_TRUE(dou.contains(sv_found));
+  EXPECT_FALSE(dou.contains(sv_missing));
+}
+
+// Negative: find<K>/contains<K> are not available without Hash::is_transparent.
+template <typename C, typename K>
+concept DequeCanFindWith = requires(const C& c, K k) { c.find(k); };
+template <typename C, typename K>
+concept DequeCanContainsWith = requires(const C& c, K k) { c.contains(k); };
+static_assert(!DequeCanFindWith<deque_of_unique<std::string>, std::string_view>);
+static_assert(!DequeCanContainsWith<deque_of_unique<std::string>, std::string_view>);
 #endif
 
 TEST(DequeOfUniqueTest, NonmemberEraseWithStrings) {
