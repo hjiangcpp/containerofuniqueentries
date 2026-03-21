@@ -57,4 +57,4 @@ jobs:
           run-clang-tidy -p build -j$(nproc) \
             -extra-arg=-Wunused-variable \
             -warnings-as-errors='*' \
-            'src/|tests/'
+            "$(pwd)/src" "$(pwd)/tests"
