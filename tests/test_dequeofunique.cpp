@@ -628,6 +628,46 @@ TEST(DequeOfUniqueTest, EraseAllElements) {
   EXPECT_THAT(dou1.set(), ::testing::UnorderedElementsAreArray(set2));
 }
 
+TEST(DequeOfUniqueTest, EraseByValue_Exists) {
+  deque_of_unique<int> dou = {1, 2, 3, 4, 5};
+  EXPECT_EQ(dou.erase(3), 1);
+  EXPECT_EQ(dou.deque(), (std::deque<int>{1, 2, 4, 5}));
+  EXPECT_EQ(dou.set().size(), 4);
+  EXPECT_FALSE(dou.find(3) != dou.cend());
+}
+
+TEST(DequeOfUniqueTest, EraseByValue_NotExists) {
+  deque_of_unique<int> dou = {1, 2, 3};
+  EXPECT_EQ(dou.erase(99), 0);
+  EXPECT_EQ(dou.deque(), (std::deque<int>{1, 2, 3}));
+  EXPECT_EQ(dou.size(), 3);
+}
+
+TEST(DequeOfUniqueTest, EraseByValue_Empty) {
+  deque_of_unique<int> dou;
+  EXPECT_EQ(dou.erase(1), 0);
+  EXPECT_TRUE(dou.empty());
+}
+
+TEST(DequeOfUniqueTest, EraseByValue_First) {
+  deque_of_unique<int> dou = {1, 2, 3};
+  EXPECT_EQ(dou.erase(1), 1);
+  EXPECT_EQ(dou.deque(), (std::deque<int>{2, 3}));
+}
+
+TEST(DequeOfUniqueTest, EraseByValue_Last) {
+  deque_of_unique<int> dou = {1, 2, 3};
+  EXPECT_EQ(dou.erase(3), 1);
+  EXPECT_EQ(dou.deque(), (std::deque<int>{1, 2}));
+}
+
+TEST(DequeOfUniqueTest, EraseByValue_OnlyElement) {
+  deque_of_unique<int> dou = {42};
+  EXPECT_EQ(dou.erase(42), 1);
+  EXPECT_TRUE(dou.empty());
+  EXPECT_TRUE(dou.set().empty());
+}
+
 TEST(DequeOfUniqueTest, InsertLvalueRvalue) {
   std::cout << "Test inserting a unique element" << '\n';
   deque_of_unique<int> dou1 = {1};

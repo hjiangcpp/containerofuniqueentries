@@ -101,6 +101,15 @@ class deque_of_unique {
     return deque_.erase(pos);
   }
 
+  size_type erase(const key_type &value) {
+    auto it = find(value);
+    if (it != cend()) {
+      erase(it);
+      return 1;
+    }
+    return 0;
+  }
+
   const_iterator erase(const_iterator first, const_iterator last) {
     if (first == last) {
       return last;

@@ -629,6 +629,46 @@ TEST(VectorOfUniqueTest, EraseAllElements) {
   EXPECT_THAT(vou1.set(), ::testing::UnorderedElementsAreArray(set2));
 }
 
+TEST(VectorOfUniqueTest, EraseByValue_Exists) {
+  vector_of_unique<int> vou = {1, 2, 3, 4, 5};
+  EXPECT_EQ(vou.erase(3), 1);
+  EXPECT_EQ(vou.vector(), (std::vector<int>{1, 2, 4, 5}));
+  EXPECT_EQ(vou.set().size(), 4);
+  EXPECT_FALSE(vou.find(3) != vou.cend());
+}
+
+TEST(VectorOfUniqueTest, EraseByValue_NotExists) {
+  vector_of_unique<int> vou = {1, 2, 3};
+  EXPECT_EQ(vou.erase(99), 0);
+  EXPECT_EQ(vou.vector(), (std::vector<int>{1, 2, 3}));
+  EXPECT_EQ(vou.size(), 3);
+}
+
+TEST(VectorOfUniqueTest, EraseByValue_Empty) {
+  vector_of_unique<int> vou;
+  EXPECT_EQ(vou.erase(1), 0);
+  EXPECT_TRUE(vou.empty());
+}
+
+TEST(VectorOfUniqueTest, EraseByValue_First) {
+  vector_of_unique<int> vou = {1, 2, 3};
+  EXPECT_EQ(vou.erase(1), 1);
+  EXPECT_EQ(vou.vector(), (std::vector<int>{2, 3}));
+}
+
+TEST(VectorOfUniqueTest, EraseByValue_Last) {
+  vector_of_unique<int> vou = {1, 2, 3};
+  EXPECT_EQ(vou.erase(3), 1);
+  EXPECT_EQ(vou.vector(), (std::vector<int>{1, 2}));
+}
+
+TEST(VectorOfUniqueTest, EraseByValue_OnlyElement) {
+  vector_of_unique<int> vou = {42};
+  EXPECT_EQ(vou.erase(42), 1);
+  EXPECT_TRUE(vou.empty());
+  EXPECT_TRUE(vou.set().empty());
+}
+
 TEST(VectorOfUniqueTest, InsertLvalueRvalue) {
   std::cout << "Test inserting a unique element" << '\n';
   vector_of_unique<int> vou1 = {1};
