@@ -23,7 +23,7 @@ class deque_of_unique {
   using key_type = T;
   using hasher = Hash;
   using key_equal = KeyEqual;
-  using const_reference = const value_type &;
+  using const_reference = const value_type&;
   using deque_type = std::deque<T>;
   using unordered_set_type = std::unordered_set<T, Hash, KeyEqual>;
   using size_type = typename deque_type::size_type;
@@ -41,19 +41,19 @@ class deque_of_unique {
     _push_back(first, last);
   }
 
-  deque_of_unique(const std::initializer_list<T> &init)
+  deque_of_unique(const std::initializer_list<T>& init)
       : deque_of_unique(init.begin(), init.end()) {}
 
-  deque_of_unique(const deque_of_unique &other) { _push_back(other); }
+  deque_of_unique(const deque_of_unique& other) { _push_back(other); }
 
-  deque_of_unique(deque_of_unique &&other) {
+  deque_of_unique(deque_of_unique&& other) {
     std::swap(deque_, other.deque_);
     std::swap(set_, other.set_);
   }
 
-  deque_of_unique &operator=(const deque_of_unique &other) = default;
-  deque_of_unique &operator=(deque_of_unique &&other) NOEXCEPT_CXX17 = default;
-  deque_of_unique &operator=(std::initializer_list<T> ilist) {
+  deque_of_unique& operator=(const deque_of_unique& other) = default;
+  deque_of_unique& operator=(deque_of_unique&& other) NOEXCEPT_CXX17 = default;
+  deque_of_unique& operator=(std::initializer_list<T> ilist) {
     deque_of_unique temp(ilist);
     std::swap(deque_, temp.deque_);
     std::swap(set_, temp.set_);
@@ -113,14 +113,14 @@ class deque_of_unique {
     return deque_.erase(first, last);
   }
 
-  std::pair<const_iterator, bool> insert(const_iterator pos, const T &value) {
+  std::pair<const_iterator, bool> insert(const_iterator pos, const T& value) {
     if (set_.insert(value).second) {
       return std::make_pair(deque_.insert(pos, value), true);
     }
     return std::make_pair(pos, false);
   }
 
-  std::pair<const_iterator, bool> insert(const_iterator pos, T &&value) {
+  std::pair<const_iterator, bool> insert(const_iterator pos, T&& value) {
     if (set_.insert(value).second) {
       return std::make_pair(deque_.insert(pos, std::move(value)), true);
     }
@@ -153,7 +153,7 @@ class deque_of_unique {
   }
 
   template <class... Args>
-  std::pair<const_iterator, bool> emplace(const_iterator pos, Args &&...args) {
+  std::pair<const_iterator, bool> emplace(const_iterator pos, Args&&... args) {
     if (set_.emplace(args...).second) {
       return std::make_pair(deque_.emplace(pos, std::forward<Args>(args)...),
                             true);
@@ -163,14 +163,14 @@ class deque_of_unique {
 
 #if __cplusplus < 201703L
   template <class... Args>
-  void emplace_front(Args &&...args) {
+  void emplace_front(Args&&... args) {
     if (set_.emplace(args...).second) {
       deque_.emplace_front(std::forward<Args>(args)...);
     }
   }
 #else
   template <class... Args>
-  std::optional<std::reference_wrapper<T>> emplace_front(Args &&...args) {
+  std::optional<std::reference_wrapper<T>> emplace_front(Args&&... args) {
     if (set_.emplace(args...).second) {
       return deque_.emplace_front(std::forward<Args>(args)...);
     }
@@ -180,14 +180,14 @@ class deque_of_unique {
 
 #if __cplusplus < 201703L
   template <class... Args>
-  void emplace_back(Args &&...args) {
+  void emplace_back(Args&&... args) {
     if (set_.emplace(args...).second) {
       deque_.emplace_back(std::forward<Args>(args)...);
     }
   }
 #else
   template <class... Args>
-  std::optional<std::reference_wrapper<T>> emplace_back(Args &&...args) {
+  std::optional<std::reference_wrapper<T>> emplace_back(Args&&... args) {
     if (set_.emplace(args...).second) {
       return deque_.emplace_back(std::forward<Args>(args)...);
     }
@@ -197,7 +197,7 @@ class deque_of_unique {
 
   void pop_front() {
     if (!deque_.empty()) {
-      const auto &f = deque_.front();
+      const auto& f = deque_.front();
       set_.erase(f);
       deque_.pop_front();
     }
@@ -205,13 +205,13 @@ class deque_of_unique {
 
   void pop_back() {
     if (!deque_.empty()) {
-      const auto &f = deque_.back();
+      const auto& f = deque_.back();
       set_.erase(f);
       deque_.pop_back();
     }
   }
 
-  bool push_front(const T &value) {
+  bool push_front(const T& value) {
     if (set_.insert(value).second) {
       deque_.push_front(value);
       return true;
@@ -219,7 +219,7 @@ class deque_of_unique {
     return false;
   }
 
-  bool push_front(T &&value) {
+  bool push_front(T&& value) {
     if (set_.count(value) > 0) {
       return false;
     }
@@ -228,7 +228,7 @@ class deque_of_unique {
     return true;
   }
 
-  bool push_back(const T &value) {
+  bool push_back(const T& value) {
     if (set_.insert(value).second) {
       deque_.push_back(value);
       return true;
@@ -236,7 +236,7 @@ class deque_of_unique {
     return false;
   }
 
-  bool push_back(T &&value) {
+  bool push_back(T&& value) {
     if (set_.count(value) > 0) {
       return false;
     }
@@ -270,13 +270,13 @@ class deque_of_unique {
     }
   }
 
-  bool _push_back(const deque_of_unique<T, Hash> &other) {
+  bool _push_back(const deque_of_unique<T, Hash>& other) {
     return _push_back(other.deque_);
   }
 
-  bool _push_back(const std::deque<T> &other) {
+  bool _push_back(const std::deque<T>& other) {
     bool any_added = false;
-    for (const auto &entry : other) {
+    for (const auto& entry : other) {
       auto added = push_back(entry);
       any_added = any_added || added;
     }
@@ -284,7 +284,7 @@ class deque_of_unique {
   }
 
  public:
-  void swap(deque_of_unique &other) NOEXCEPT_CXX17 {
+  void swap(deque_of_unique& other) NOEXCEPT_CXX17 {
     deque_.swap(other.deque_);
     set_.swap(other.set_);
   }
@@ -296,7 +296,7 @@ class deque_of_unique {
 
 // Look up
 #if __cplusplus < 202002L
-  const_iterator find(const T &x) const {
+  const_iterator find(const T& x) const {
     if (set_.count(x) == 0) {
       return cend();
     }
@@ -310,7 +310,7 @@ class deque_of_unique {
     return cend();
   }
 #else
-  const_iterator find(const T &x) const {
+  const_iterator find(const T& x) const {
     if (set_.count(x) == 0) {
       return cend();
     }
@@ -326,7 +326,7 @@ class deque_of_unique {
 
   template <class K>
     requires requires { typename Hash::is_transparent; }
-  const_iterator find(const K &x) const {
+  const_iterator find(const K& x) const {
     if (set_.count(x) == 0) {
       return cend();
     }
@@ -342,11 +342,11 @@ class deque_of_unique {
 #endif
 
 #if __cplusplus >= 202002L
-  bool contains(const key_type &key) const { return set_.contains(key); }
+  bool contains(const key_type& key) const { return set_.contains(key); }
 
   template <class K>
     requires requires { typename Hash::is_transparent; }
-  bool contains(const K &x) const {
+  bool contains(const K& x) const {
     return set_.contains(x);
   }
 #endif
@@ -372,8 +372,8 @@ class deque_of_unique {
   ~deque_of_unique() = default;
 
   // Get member variables
-  const deque_type &deque() const { return deque_; }
-  const unordered_set_type &set() const { return set_; }
+  const deque_type& deque() const { return deque_; }
+  const unordered_set_type& set() const { return set_; }
 
  private:
   deque_type deque_;
@@ -385,7 +385,7 @@ class deque_of_unique {
 template <class T, class Hash = std::hash<T>, class KeyEqual = std::equal_to<T>,
           class U>
 typename deque_of_unique<T, Hash, KeyEqual>::size_type erase(
-    deque_of_unique<T, Hash, KeyEqual> &c, const U &value) {
+    deque_of_unique<T, Hash, KeyEqual>& c, const U& value) {
   auto it = c.find(value);
   if (it != c.cend()) {
     c.erase(it);
@@ -397,7 +397,7 @@ typename deque_of_unique<T, Hash, KeyEqual>::size_type erase(
 template <class T, class Hash = std::hash<T>, class KeyEqual = std::equal_to<T>,
           class U = T>
 typename deque_of_unique<T, Hash, KeyEqual>::size_type erase(
-    deque_of_unique<T, Hash, KeyEqual> &c, const U &value) {
+    deque_of_unique<T, Hash, KeyEqual>& c, const U& value) {
   auto it = c.find(value);
   if (it != c.cend()) {
     c.erase(it);
@@ -410,7 +410,7 @@ typename deque_of_unique<T, Hash, KeyEqual>::size_type erase(
 template <class T, class Hash = std::hash<T>, class KeyEqual = std::equal_to<T>,
           class Pred>
 typename deque_of_unique<T, Hash, KeyEqual>::size_type erase_if(
-    deque_of_unique<T, Hash, KeyEqual> &c, Pred pred) {
+    deque_of_unique<T, Hash, KeyEqual>& c, Pred pred) {
   auto it = c.cbegin();
   typename deque_of_unique<T, Hash, KeyEqual>::size_type r = 0;
   while (it != c.cend()) {
@@ -426,45 +426,45 @@ typename deque_of_unique<T, Hash, KeyEqual>::size_type erase_if(
 
 // Operators
 template <class T, class Hash = std::hash<T>, class KeyEqual = std::equal_to<T>>
-bool operator==(const deque_of_unique<T, Hash, KeyEqual> &lhs,
-                const deque_of_unique<T, Hash, KeyEqual> &rhs) {
+bool operator==(const deque_of_unique<T, Hash, KeyEqual>& lhs,
+                const deque_of_unique<T, Hash, KeyEqual>& rhs) {
   return (lhs.deque() == rhs.deque());
 }
 
 #if __cplusplus < 202002L
 template <class T, class Hash = std::hash<T>, class KeyEqual = std::equal_to<T>>
-bool operator!=(const deque_of_unique<T, Hash, KeyEqual> &lhs,
-                const deque_of_unique<T, Hash, KeyEqual> &rhs) {
+bool operator!=(const deque_of_unique<T, Hash, KeyEqual>& lhs,
+                const deque_of_unique<T, Hash, KeyEqual>& rhs) {
   return (lhs.deque() != rhs.deque());
 }
 
 template <class T, class Hash = std::hash<T>, class KeyEqual = std::equal_to<T>>
-bool operator<(const deque_of_unique<T, Hash, KeyEqual> &lhs,
-               const deque_of_unique<T, Hash, KeyEqual> &rhs) {
+bool operator<(const deque_of_unique<T, Hash, KeyEqual>& lhs,
+               const deque_of_unique<T, Hash, KeyEqual>& rhs) {
   return (lhs.deque() < rhs.deque());
 }
 
 template <class T, class Hash = std::hash<T>, class KeyEqual = std::equal_to<T>>
-bool operator<=(const deque_of_unique<T, Hash, KeyEqual> &lhs,
-                const deque_of_unique<T, Hash, KeyEqual> &rhs) {
+bool operator<=(const deque_of_unique<T, Hash, KeyEqual>& lhs,
+                const deque_of_unique<T, Hash, KeyEqual>& rhs) {
   return (lhs.deque() <= rhs.deque());
 }
 
 template <class T, class Hash = std::hash<T>, class KeyEqual = std::equal_to<T>>
-bool operator>(const deque_of_unique<T, Hash, KeyEqual> &lhs,
-               const deque_of_unique<T, Hash, KeyEqual> &rhs) {
+bool operator>(const deque_of_unique<T, Hash, KeyEqual>& lhs,
+               const deque_of_unique<T, Hash, KeyEqual>& rhs) {
   return (lhs.deque() > rhs.deque());
 }
 
 template <class T, class Hash = std::hash<T>, class KeyEqual = std::equal_to<T>>
-bool operator>=(const deque_of_unique<T, Hash, KeyEqual> &lhs,
-                const deque_of_unique<T, Hash, KeyEqual> &rhs) {
+bool operator>=(const deque_of_unique<T, Hash, KeyEqual>& lhs,
+                const deque_of_unique<T, Hash, KeyEqual>& rhs) {
   return (lhs.deque() >= rhs.deque());
 }
 #else
 template <class T, class Hash = std::hash<T>, class KeyEqual = std::equal_to<T>>
-auto operator<=>(const deque_of_unique<T, Hash, KeyEqual> &lhs,
-                 const deque_of_unique<T, Hash, KeyEqual> &rhs) {
+auto operator<=>(const deque_of_unique<T, Hash, KeyEqual>& lhs,
+                 const deque_of_unique<T, Hash, KeyEqual>& rhs) {
   return (lhs.deque() <=> rhs.deque());
 }
 #endif
