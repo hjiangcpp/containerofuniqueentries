@@ -6,6 +6,9 @@
 #include <unordered_set>
 #include <utility>  // For std::swap
 #include <vector>
+#if __cplusplus >= 202302L
+#include <ranges>
+#endif
 
 #if __cplusplus >= 201703L
 #define NOEXCEPT_CXX17 noexcept
@@ -70,6 +73,15 @@ class vector_of_unique {
     clear();
     _push_back(ilist.begin(), ilist.end());
   }
+
+#if __cplusplus >= 202302L
+  template <std::ranges::input_range R>
+  void assign_range(R&& rng) {
+    clear();
+    for (auto&& v : std::forward<R>(rng))
+      push_back(std::forward<decltype(v)>(v));
+  }
+#endif
 
   // Element access
   const_reference at(size_type pos) const { return vector_.at(pos); }
@@ -152,6 +164,28 @@ class vector_of_unique {
     return insert(pos, ilist.begin(), ilist.end());
   }
 
+#if __cplusplus >= 202302L
+  template <std::ranges::input_range R>
+  const_iterator insert_range(const_iterator pos, R&& rng) {
+    auto pos_index = pos - vector_.cbegin();
+    auto first_inserted_index = pos_index;
+    auto temp_pos = vector_.begin() + pos_index;
+    auto any_inserted = false;
+    for (auto&& v : std::forward<R>(rng)) {
+      if (set_.insert(v).second) {
+        temp_pos = vector_.insert(temp_pos, std::forward<decltype(v)>(v));
+        if (!any_inserted) {
+          first_inserted_index = temp_pos - vector_.cbegin();
+          any_inserted = true;
+        }
+        ++temp_pos;
+      }
+    }
+    return any_inserted ? first_inserted_index + vector_.cbegin()
+                        : pos_index + vector_.cbegin();
+  }
+#endif
+
   template <class... Args>
   std::pair<const_iterator, bool> emplace(const_iterator pos, Args&&... args) {
     if (set_.emplace(args...).second) {
@@ -202,6 +236,14 @@ class vector_of_unique {
     vector_.push_back(std::move(value));
     return true;
   }
+
+#if __cplusplus >= 202302L
+  template <std::ranges::input_range R>
+  void append_range(R&& rng) {
+    for (auto&& v : std::forward<R>(rng))
+      push_back(std::forward<decltype(v)>(v));
+  }
+#endif
 
  private:
   template <class input_it>
@@ -296,6 +338,26 @@ class vector_of_unique {
     }
   bool contains(const K& x) const {
     return set_.contains(x);
+  }
+#endif
+
+  std::pair<const_iterator, const_iterator> equal_range(
+      const key_type& key) const {
+    auto it = find(key);
+    if (it == cend()) return {cend(), cend()};
+    return {it, it + 1};
+  }
+
+#if __cplusplus >= 202002L
+  template <class K>
+    requires requires {
+      typename Hash::is_transparent;
+      typename KeyEqual::is_transparent;
+    }
+  std::pair<const_iterator, const_iterator> equal_range(const K& x) const {
+    auto it = find(x);
+    if (it == cend()) return {cend(), cend()};
+    return {it, it + 1};
   }
 #endif
 

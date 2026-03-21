@@ -1273,20 +1273,14 @@ TEST(VectorOfUniqueTest, Find_HeterogeneousLookup) {
 }
 
 // Negative: find<K>/contains<K> are not available without Hash::is_transparent.
-// Use a type with no implicit conversion to std::string so the non-transparent
-// find(const T&) overload cannot accept it via implicit conversion.
-struct VectorOpaqueKey {
-  std::string value;
-  explicit VectorOpaqueKey(const char* s) : value(s) {}
-};
 template <typename C, typename K>
 concept VectorCanFindWith = requires(const C& c, K k) { c.find(k); };
 template <typename C, typename K>
 concept VectorCanContainsWith = requires(const C& c, K k) { c.contains(k); };
 static_assert(
-    !VectorCanFindWith<vector_of_unique<std::string>, VectorOpaqueKey>);
+    !VectorCanFindWith<vector_of_unique<std::string>, std::string_view>);
 static_assert(
-    !VectorCanContainsWith<vector_of_unique<std::string>, VectorOpaqueKey>);
+    !VectorCanContainsWith<vector_of_unique<std::string>, std::string_view>);
 #endif
 
 TEST(VectorOfUniqueTest, NonmemberEraseWithStrings) {
@@ -1443,3 +1437,92 @@ TEST(VectorOfUniqueTest, EraseIf_RemainingElementsPreserveOrder) {
   erase_if(vou, [](int x) { return x % 2 == 0; });
   EXPECT_EQ(vou.vector(), std::vector<int>({1, 3, 5}));
 }
+
+TEST(VectorOfUniqueTest, EqualRange_Found) {
+  vector_of_unique<int> vou = {10, 20, 30};
+  auto [lo, hi] = vou.equal_range(20);
+  ASSERT_NE(lo, vou.cend());
+  EXPECT_EQ(*lo, 20);
+  EXPECT_EQ(hi, lo + 1);
+}
+
+TEST(VectorOfUniqueTest, EqualRange_NotFound) {
+  vector_of_unique<int> vou = {10, 20, 30};
+  auto [lo, hi] = vou.equal_range(99);
+  EXPECT_EQ(lo, vou.cend());
+  EXPECT_EQ(hi, vou.cend());
+}
+
+TEST(VectorOfUniqueTest, EqualRange_Empty) {
+  vector_of_unique<int> vou;
+  auto [lo, hi] = vou.equal_range(1);
+  EXPECT_EQ(lo, vou.cend());
+  EXPECT_EQ(hi, vou.cend());
+}
+
+#if __cplusplus >= 202002L
+TEST(VectorOfUniqueTest, EqualRange_HeterogeneousLookup) {
+  vector_of_unique<std::string, StringHash, StringEqual> vou = {"hello",
+                                                                "world"};
+  auto [lo, hi] = vou.equal_range(std::string_view("hello"));
+  ASSERT_NE(lo, vou.cend());
+  EXPECT_EQ(*lo, "hello");
+  EXPECT_EQ(hi, lo + 1);
+
+  auto [lo2, hi2] = vou.equal_range(std::string_view("missing"));
+  EXPECT_EQ(lo2, vou.cend());
+  EXPECT_EQ(hi2, vou.cend());
+}
+#endif
+
+#if __cplusplus >= 202302L
+TEST(VectorOfUniqueTest, AssignRange_Basic) {
+  vector_of_unique<int> vou = {1, 2, 3};
+  std::vector<int> src = {4, 5, 6};
+  vou.assign_range(src);
+  EXPECT_EQ(vou.vector(), std::vector<int>({4, 5, 6}));
+}
+
+TEST(VectorOfUniqueTest, AssignRange_Deduplicates) {
+  vector_of_unique<int> vou;
+  std::vector<int> src = {1, 2, 2, 3, 1};
+  vou.assign_range(src);
+  EXPECT_EQ(vou.vector(), std::vector<int>({1, 2, 3}));
+}
+
+TEST(VectorOfUniqueTest, AssignRange_ClearsExisting) {
+  vector_of_unique<int> vou = {10, 20, 30};
+  std::vector<int> src = {1};
+  vou.assign_range(src);
+  EXPECT_EQ(vou.size(), 1);
+  EXPECT_EQ(vou.front(), 1);
+}
+
+TEST(VectorOfUniqueTest, InsertRange_Basic) {
+  vector_of_unique<int> vou = {1, 3};
+  std::vector<int> src = {2};
+  vou.insert_range(vou.cbegin() + 1, src);
+  EXPECT_EQ(vou.vector(), std::vector<int>({1, 2, 3}));
+}
+
+TEST(VectorOfUniqueTest, InsertRange_SkipsDuplicates) {
+  vector_of_unique<int> vou = {1, 2, 3};
+  std::vector<int> src = {2, 4};
+  vou.insert_range(vou.cend(), src);
+  EXPECT_EQ(vou.vector(), std::vector<int>({1, 2, 3, 4}));
+}
+
+TEST(VectorOfUniqueTest, AppendRange_Basic) {
+  vector_of_unique<int> vou = {1, 2};
+  std::vector<int> src = {3, 4};
+  vou.append_range(src);
+  EXPECT_EQ(vou.vector(), std::vector<int>({1, 2, 3, 4}));
+}
+
+TEST(VectorOfUniqueTest, AppendRange_SkipsDuplicates) {
+  vector_of_unique<int> vou = {1, 2};
+  std::vector<int> src = {2, 3};
+  vou.append_range(src);
+  EXPECT_EQ(vou.vector(), std::vector<int>({1, 2, 3}));
+}
+#endif
