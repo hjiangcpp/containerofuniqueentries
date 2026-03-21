@@ -10,10 +10,12 @@
 #include <ranges>
 #endif
 
+#ifndef NOEXCEPT_CXX17
 #if __cplusplus >= 201703L
 #define NOEXCEPT_CXX17 noexcept
 #else
 #define NOEXCEPT_CXX17
+#endif
 #endif
 
 namespace containerofunique {
@@ -229,12 +231,11 @@ class vector_of_unique {
   }
 
   bool push_back(T&& value) {
-    if (set_.count(value) > 0) {
-      return false;
+    if (set_.insert(value).second) {
+      vector_.push_back(std::move(value));
+      return true;
     }
-    set_.insert(value);
-    vector_.push_back(std::move(value));
-    return true;
+    return false;
   }
 
 #if __cplusplus >= 202302L
@@ -253,7 +254,7 @@ class vector_of_unique {
     }
   }
 
-  bool _push_back(const vector_of_unique<T, Hash>& other) {
+  bool _push_back(const vector_of_unique<T, Hash, KeyEqual>& other) {
     return _push_back(other.vector_);
   }
 

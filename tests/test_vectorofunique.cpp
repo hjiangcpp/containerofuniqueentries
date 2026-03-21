@@ -1526,3 +1526,46 @@ TEST(VectorOfUniqueTest, AppendRange_SkipsDuplicates) {
   EXPECT_EQ(vou.vector(), std::vector<int>({1, 2, 3}));
 }
 #endif
+
+// Tests for non-default KeyEqual
+struct CaseInsensitiveHashV {
+  size_t operator()(const std::string& s) const {
+    std::string lower = s;
+    std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+    return std::hash<std::string>{}(lower);
+  }
+};
+
+struct CaseInsensitiveEqualV {
+  bool operator()(const std::string& a, const std::string& b) const {
+    if (a.size() != b.size()) return false;
+    for (size_t i = 0; i < a.size(); ++i)
+      if (::tolower(static_cast<unsigned char>(a[i])) !=
+          ::tolower(static_cast<unsigned char>(b[i])))
+        return false;
+    return true;
+  }
+};
+
+using CaseInsensitiveVector =
+    vector_of_unique<std::string, CaseInsensitiveHashV, CaseInsensitiveEqualV>;
+
+TEST(VectorOfUniqueTest, CustomKeyEqual_CopyConstructor) {
+  CaseInsensitiveVector v1 = {"hello", "World"};
+  CaseInsensitiveVector v2 = v1;
+  EXPECT_EQ(v2.vector(), v1.vector());
+  EXPECT_EQ(v2.size(), 2u);
+}
+
+TEST(VectorOfUniqueTest, CustomKeyEqual_CopyConstructorRejectsDuplicates) {
+  CaseInsensitiveVector v1 = {"hello", "HELLO", "World"};
+  CaseInsensitiveVector v2 = v1;
+  EXPECT_EQ(v2.vector(), (std::vector<std::string>{"hello", "World"}));
+}
+
+TEST(VectorOfUniqueTest, CustomKeyEqual_CopyAssignment) {
+  CaseInsensitiveVector v1 = {"foo", "Bar"};
+  CaseInsensitiveVector v2;
+  v2 = v1;
+  EXPECT_EQ(v2.vector(), v1.vector());
+}

@@ -1804,3 +1804,46 @@ TEST(DequeOfUniqueTest, PrependRange_IntraRangeDuplicates) {
   EXPECT_EQ(dou.deque(), std::deque<int>({1, 2, 4, 5}));
 }
 #endif
+
+// Tests for non-default KeyEqual
+struct CaseInsensitiveHash {
+  size_t operator()(const std::string& s) const {
+    std::string lower = s;
+    std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+    return std::hash<std::string>{}(lower);
+  }
+};
+
+struct CaseInsensitiveEqual {
+  bool operator()(const std::string& a, const std::string& b) const {
+    if (a.size() != b.size()) return false;
+    for (size_t i = 0; i < a.size(); ++i)
+      if (::tolower(static_cast<unsigned char>(a[i])) !=
+          ::tolower(static_cast<unsigned char>(b[i])))
+        return false;
+    return true;
+  }
+};
+
+using CaseInsensitiveDeque =
+    deque_of_unique<std::string, CaseInsensitiveHash, CaseInsensitiveEqual>;
+
+TEST(DequeOfUniqueTest, CustomKeyEqual_CopyConstructor) {
+  CaseInsensitiveDeque d1 = {"hello", "World"};
+  CaseInsensitiveDeque d2 = d1;
+  EXPECT_EQ(d2.deque(), d1.deque());
+  EXPECT_EQ(d2.size(), 2u);
+}
+
+TEST(DequeOfUniqueTest, CustomKeyEqual_CopyConstructorRejectsDuplicates) {
+  CaseInsensitiveDeque d1 = {"hello", "HELLO", "World"};
+  CaseInsensitiveDeque d2 = d1;
+  EXPECT_EQ(d2.deque(), (std::deque<std::string>{"hello", "World"}));
+}
+
+TEST(DequeOfUniqueTest, CustomKeyEqual_CopyAssignment) {
+  CaseInsensitiveDeque d1 = {"foo", "Bar"};
+  CaseInsensitiveDeque d2;
+  d2 = d1;
+  EXPECT_EQ(d2.deque(), d1.deque());
+}

@@ -10,10 +10,12 @@
 #include <ranges>
 #endif
 
+#ifndef NOEXCEPT_CXX17
 #if __cplusplus >= 201703L
 #define NOEXCEPT_CXX17 noexcept
 #else
 #define NOEXCEPT_CXX17
+#endif
 #endif
 
 namespace containerofunique {
@@ -254,12 +256,11 @@ class deque_of_unique {
   }
 
   bool push_front(T&& value) {
-    if (set_.count(value) > 0) {
-      return false;
+    if (set_.insert(value).second) {
+      deque_.push_front(std::move(value));
+      return true;
     }
-    set_.insert(value);
-    deque_.push_front(std::move(value));
-    return true;
+    return false;
   }
 
   bool push_back(const T& value) {
@@ -271,12 +272,11 @@ class deque_of_unique {
   }
 
   bool push_back(T&& value) {
-    if (set_.count(value) > 0) {
-      return false;
+    if (set_.insert(value).second) {
+      deque_.push_back(std::move(value));
+      return true;
     }
-    set_.insert(value);
-    deque_.push_back(std::move(value));
-    return true;
+    return false;
   }
 
 #if __cplusplus >= 202302L
@@ -306,7 +306,7 @@ class deque_of_unique {
     }
   }
 
-  bool _push_back(const deque_of_unique<T, Hash>& other) {
+  bool _push_back(const deque_of_unique<T, Hash, KeyEqual>& other) {
     return _push_back(other.deque_);
   }
 
