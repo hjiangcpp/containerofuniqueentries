@@ -93,10 +93,10 @@ class vector_of_unique {
     set_.clear();
   }
 
+  // Precondition: pos must be a valid and dereferenceable iterator of this
+  // container (i.e. pos != cend()). Violating this is undefined behaviour,
+  // matching the contract of std::vector::erase.
   const_iterator erase(const_iterator pos) {
-    if (vector_.empty()) {
-      return vector_.cend();
-    }
     set_.erase(*pos);
     return vector_.erase(pos);
   }
