@@ -155,8 +155,8 @@ TEST(VectorOfUniqueTest, MoveAssignmentIsNoexcept) {
   vector_of_unique<std::string> vou3;
 
   // Static assertion to check if the move assignment operator is noexcept
-  static_assert(noexcept(std::declval<vector_of_unique<std::string> &>() =
-                             std::declval<vector_of_unique<std::string> &&>()),
+  static_assert(noexcept(std::declval<vector_of_unique<std::string>&>() =
+                             std::declval<vector_of_unique<std::string>&&>()),
                 "Move assignment operator should be noexcept.");
 
   // Test empty vous
@@ -496,19 +496,19 @@ TEST(VectorOfUniqueTest, EmptyContainer_Iterators) {
 TEST(VectorOfUniqueTest, ConstCorrectness_Iterators) {
   vector_of_unique<int> vou = {1, 2, 3, 4};
 #if __cplusplus >= 202002L
-  EXPECT_TRUE((std::same_as<decltype(*vou.cbegin()), const int &>));
-  EXPECT_TRUE((std::same_as<decltype(*vou.cend()), const int &>));
-  EXPECT_TRUE((std::same_as<decltype(*vou.crbegin()), const int &>));
-  EXPECT_TRUE((std::same_as<decltype(*vou.crend()), const int &>));
+  EXPECT_TRUE((std::same_as<decltype(*vou.cbegin()), const int&>));
+  EXPECT_TRUE((std::same_as<decltype(*vou.cend()), const int&>));
+  EXPECT_TRUE((std::same_as<decltype(*vou.crbegin()), const int&>));
+  EXPECT_TRUE((std::same_as<decltype(*vou.crend()), const int&>));
 #else
   // NOLINTNEXTLINE(modernize-type-traits)
-  EXPECT_TRUE((std::is_same<decltype(*vou.cbegin()), const int &>::value));
+  EXPECT_TRUE((std::is_same<decltype(*vou.cbegin()), const int&>::value));
   // NOLINTNEXTLINE(modernize-type-traits)
-  EXPECT_TRUE((std::is_same<decltype(*vou.cend()), const int &>::value));
+  EXPECT_TRUE((std::is_same<decltype(*vou.cend()), const int&>::value));
   // NOLINTNEXTLINE(modernize-type-traits)
-  EXPECT_TRUE((std::is_same<decltype(*vou.crbegin()), const int &>::value));
+  EXPECT_TRUE((std::is_same<decltype(*vou.crbegin()), const int&>::value));
   // NOLINTNEXTLINE(modernize-type-traits)
-  EXPECT_TRUE((std::is_same<decltype(*vou.crend()), const int &>::value));
+  EXPECT_TRUE((std::is_same<decltype(*vou.crend()), const int&>::value));
 #endif
 }
 
@@ -540,7 +540,7 @@ TEST(VectorOfUniqueTest, BeginEnd_Iteration) {
 TEST(VectorOfUniqueTest, BeginEnd_RangeBasedFor) {
   vector_of_unique<int> vou = {1, 2, 3, 4};
   std::vector<int> result;
-  for (const auto &x : vou) {
+  for (const auto& x : vou) {
     result.push_back(x);
   }
   EXPECT_EQ(result, (std::vector<int>{1, 2, 3, 4}));
@@ -1253,12 +1253,15 @@ struct StringHash {
 
 struct StringEqual {
   using is_transparent = void;
-  bool operator()(std::string_view a, std::string_view b) const { return a == b; }
+  bool operator()(std::string_view a, std::string_view b) const {
+    return a == b;
+  }
 };
 
 // Positive: find<K> and contains<K> are available with a transparent Hash.
 TEST(VectorOfUniqueTest, Find_HeterogeneousLookup) {
-  vector_of_unique<std::string, StringHash, StringEqual> vou = {"hello", "world"};
+  vector_of_unique<std::string, StringHash, StringEqual> vou = {"hello",
+                                                                "world"};
   std::string_view sv_found = "hello";
   std::string_view sv_missing = "foo";
 
@@ -1274,8 +1277,10 @@ template <typename C, typename K>
 concept VectorCanFindWith = requires(const C& c, K k) { c.find(k); };
 template <typename C, typename K>
 concept VectorCanContainsWith = requires(const C& c, K k) { c.contains(k); };
-static_assert(!VectorCanFindWith<vector_of_unique<std::string>, std::string_view>);
-static_assert(!VectorCanContainsWith<vector_of_unique<std::string>, std::string_view>);
+static_assert(
+    !VectorCanFindWith<vector_of_unique<std::string>, std::string_view>);
+static_assert(
+    !VectorCanContainsWith<vector_of_unique<std::string>, std::string_view>);
 #endif
 
 TEST(VectorOfUniqueTest, NonmemberEraseWithStrings) {
@@ -1410,7 +1415,7 @@ TEST(VectorOfUniqueTest, EraseIfSingleElementNotRemoved) {
 
 TEST(VectorOfUniqueTest, EraseIfWithStrings) {
   vector_of_unique<std::string> vou = {"apple", "banana", "cherry", "date"};
-  auto pred = [](const std::string &s) { return s[0] == 'b'; };
+  auto pred = [](const std::string& s) { return s[0] == 'b'; };
   size_t removed_count = erase_if(vou, pred);
   EXPECT_EQ(removed_count, 1);
   EXPECT_EQ(vou.size(), 3);
@@ -1419,7 +1424,7 @@ TEST(VectorOfUniqueTest, EraseIfWithStrings) {
 
 TEST(VectorOfUniqueTest, EraseIfWithComplexPredicate) {
   vector_of_unique<std::string> vou = {"apple", "banana", "cherry", "date"};
-  auto pred = [](const std::string &s) { return s.length() > 5; };
+  auto pred = [](const std::string& s) { return s.length() > 5; };
   size_t removed_count = erase_if(vou, pred);
   EXPECT_EQ(removed_count, 2);
   EXPECT_EQ(vou.size(), 2);
@@ -1432,3 +1437,92 @@ TEST(VectorOfUniqueTest, EraseIf_RemainingElementsPreserveOrder) {
   erase_if(vou, [](int x) { return x % 2 == 0; });
   EXPECT_EQ(vou.vector(), std::vector<int>({1, 3, 5}));
 }
+
+TEST(VectorOfUniqueTest, EqualRange_Found) {
+  vector_of_unique<int> vou = {10, 20, 30};
+  auto [lo, hi] = vou.equal_range(20);
+  ASSERT_NE(lo, vou.cend());
+  EXPECT_EQ(*lo, 20);
+  EXPECT_EQ(hi, lo + 1);
+}
+
+TEST(VectorOfUniqueTest, EqualRange_NotFound) {
+  vector_of_unique<int> vou = {10, 20, 30};
+  auto [lo, hi] = vou.equal_range(99);
+  EXPECT_EQ(lo, vou.cend());
+  EXPECT_EQ(hi, vou.cend());
+}
+
+TEST(VectorOfUniqueTest, EqualRange_Empty) {
+  vector_of_unique<int> vou;
+  auto [lo, hi] = vou.equal_range(1);
+  EXPECT_EQ(lo, vou.cend());
+  EXPECT_EQ(hi, vou.cend());
+}
+
+#if __cplusplus >= 202002L
+TEST(VectorOfUniqueTest, EqualRange_HeterogeneousLookup) {
+  vector_of_unique<std::string, StringHash, StringEqual> vou = {"hello",
+                                                                "world"};
+  auto [lo, hi] = vou.equal_range(std::string_view("hello"));
+  ASSERT_NE(lo, vou.cend());
+  EXPECT_EQ(*lo, "hello");
+  EXPECT_EQ(hi, lo + 1);
+
+  auto [lo2, hi2] = vou.equal_range(std::string_view("missing"));
+  EXPECT_EQ(lo2, vou.cend());
+  EXPECT_EQ(hi2, vou.cend());
+}
+#endif
+
+#if __cplusplus >= 202302L
+TEST(VectorOfUniqueTest, AssignRange_Basic) {
+  vector_of_unique<int> vou = {1, 2, 3};
+  std::vector<int> src = {4, 5, 6};
+  vou.assign_range(src);
+  EXPECT_EQ(vou.vector(), std::vector<int>({4, 5, 6}));
+}
+
+TEST(VectorOfUniqueTest, AssignRange_Deduplicates) {
+  vector_of_unique<int> vou;
+  std::vector<int> src = {1, 2, 2, 3, 1};
+  vou.assign_range(src);
+  EXPECT_EQ(vou.vector(), std::vector<int>({1, 2, 3}));
+}
+
+TEST(VectorOfUniqueTest, AssignRange_ClearsExisting) {
+  vector_of_unique<int> vou = {10, 20, 30};
+  std::vector<int> src = {1};
+  vou.assign_range(src);
+  EXPECT_EQ(vou.size(), 1);
+  EXPECT_EQ(vou.front(), 1);
+}
+
+TEST(VectorOfUniqueTest, InsertRange_Basic) {
+  vector_of_unique<int> vou = {1, 3};
+  std::vector<int> src = {2};
+  vou.insert_range(vou.cbegin() + 1, src);
+  EXPECT_EQ(vou.vector(), std::vector<int>({1, 2, 3}));
+}
+
+TEST(VectorOfUniqueTest, InsertRange_SkipsDuplicates) {
+  vector_of_unique<int> vou = {1, 2, 3};
+  std::vector<int> src = {2, 4};
+  vou.insert_range(vou.cend(), src);
+  EXPECT_EQ(vou.vector(), std::vector<int>({1, 2, 3, 4}));
+}
+
+TEST(VectorOfUniqueTest, AppendRange_Basic) {
+  vector_of_unique<int> vou = {1, 2};
+  std::vector<int> src = {3, 4};
+  vou.append_range(src);
+  EXPECT_EQ(vou.vector(), std::vector<int>({1, 2, 3, 4}));
+}
+
+TEST(VectorOfUniqueTest, AppendRange_SkipsDuplicates) {
+  vector_of_unique<int> vou = {1, 2};
+  std::vector<int> src = {2, 3};
+  vou.append_range(src);
+  EXPECT_EQ(vou.vector(), std::vector<int>({1, 2, 3}));
+}
+#endif
