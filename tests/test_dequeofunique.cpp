@@ -8,6 +8,7 @@
 #include <deque>
 #include <numeric>
 #include <stdexcept>
+#include <string_view>
 #include <unordered_set>
 #include <utility>
 
@@ -154,8 +155,8 @@ TEST(DequeOfUniqueTest, MoveAssignmentIsNoexcept) {
   deque_of_unique<std::string> dou3;
 
   // Static assertion to check if the move assignment operator is noexcept
-  static_assert(noexcept(std::declval<deque_of_unique<std::string> &>() =
-                             std::declval<deque_of_unique<std::string> &&>()),
+  static_assert(noexcept(std::declval<deque_of_unique<std::string>&>() =
+                             std::declval<deque_of_unique<std::string>&&>()),
                 "Move assignment operator should be noexcept.");
 
   // Test empty dous
@@ -494,19 +495,19 @@ TEST(DequeOfUniqueTest, EmptyContainerIterators) {
 TEST(DequeOfUniqueTest, ConstCorrectness_Iterators) {
   deque_of_unique<int> dou = {1, 2, 3, 4};
 #if __cplusplus >= 202002L
-  EXPECT_TRUE((std::same_as<decltype(*dou.cbegin()), const int &>));
-  EXPECT_TRUE((std::same_as<decltype(*dou.cend()), const int &>));
-  EXPECT_TRUE((std::same_as<decltype(*dou.crbegin()), const int &>));
-  EXPECT_TRUE((std::same_as<decltype(*dou.crend()), const int &>));
+  EXPECT_TRUE((std::same_as<decltype(*dou.cbegin()), const int&>));
+  EXPECT_TRUE((std::same_as<decltype(*dou.cend()), const int&>));
+  EXPECT_TRUE((std::same_as<decltype(*dou.crbegin()), const int&>));
+  EXPECT_TRUE((std::same_as<decltype(*dou.crend()), const int&>));
 #else
   // NOLINTNEXTLINE(modernize-type-traits)
-  EXPECT_TRUE((std::is_same<decltype(*dou.cbegin()), const int &>::value));
+  EXPECT_TRUE((std::is_same<decltype(*dou.cbegin()), const int&>::value));
   // NOLINTNEXTLINE(modernize-type-traits)
-  EXPECT_TRUE((std::is_same<decltype(*dou.cend()), const int &>::value));
+  EXPECT_TRUE((std::is_same<decltype(*dou.cend()), const int&>::value));
   // NOLINTNEXTLINE(modernize-type-traits)
-  EXPECT_TRUE((std::is_same<decltype(*dou.crbegin()), const int &>::value));
+  EXPECT_TRUE((std::is_same<decltype(*dou.crbegin()), const int&>::value));
   // NOLINTNEXTLINE(modernize-type-traits)
-  EXPECT_TRUE((std::is_same<decltype(*dou.crend()), const int &>::value));
+  EXPECT_TRUE((std::is_same<decltype(*dou.crend()), const int&>::value));
 #endif
 }
 
@@ -537,7 +538,7 @@ TEST(DequeOfUniqueTest, BeginEnd_Iteration) {
 TEST(DequeOfUniqueTest, BeginEnd_RangeBasedFor) {
   deque_of_unique<int> dou = {1, 2, 3, 4};
   std::deque<int> result;
-  for (const auto &x : dou) {
+  for (const auto& x : dou) {
     result.push_back(x);
   }
   EXPECT_EQ(result, (std::deque<int>{1, 2, 3, 4}));
@@ -1491,6 +1492,50 @@ TEST(DequeOfUniqueTest, ContainsWithVariousIntTypes) {
   EXPECT_TRUE(dou.contains(int16_t(1)));
   EXPECT_FALSE(dou.contains(int16_t(4)));
 }
+
+// Heterogeneous lookup requires Hash::is_transparent.
+struct StringHash {
+  using is_transparent = void;
+  size_t operator()(std::string_view sv) const {
+    return std::hash<std::string_view>{}(sv);
+  }
+};
+
+struct StringEqual {
+  using is_transparent = void;
+  bool operator()(std::string_view a, std::string_view b) const {
+    return a == b;
+  }
+};
+
+// Positive: find<K> and contains<K> are available with a transparent Hash.
+TEST(DequeOfUniqueTest, Find_HeterogeneousLookup) {
+  deque_of_unique<std::string, StringHash, StringEqual> dou = {"hello",
+                                                               "world"};
+  std::string_view sv_found = "hello";
+  std::string_view sv_missing = "foo";
+
+  EXPECT_NE(dou.find(sv_found), dou.cend());
+  EXPECT_EQ(*dou.find(sv_found), "hello");
+  EXPECT_EQ(dou.find(sv_missing), dou.cend());
+  EXPECT_TRUE(dou.contains(sv_found));
+  EXPECT_FALSE(dou.contains(sv_missing));
+}
+
+// Negative: find<K>/contains<K> are not available without Hash::is_transparent.
+// Use a type with no implicit conversion to std::string so the non-transparent
+// find(const T&) overload cannot accept it via implicit conversion.
+struct DequeOpaqueKey {
+  std::string value;
+  explicit DequeOpaqueKey(const char* s) : value(s) {}
+};
+template <typename C, typename K>
+concept DequeCanFindWith = requires(const C& c, K k) { c.find(k); };
+template <typename C, typename K>
+concept DequeCanContainsWith = requires(const C& c, K k) { c.contains(k); };
+static_assert(!DequeCanFindWith<deque_of_unique<std::string>, DequeOpaqueKey>);
+static_assert(
+    !DequeCanContainsWith<deque_of_unique<std::string>, DequeOpaqueKey>);
 #endif
 
 TEST(DequeOfUniqueTest, NonmemberEraseWithStrings) {
@@ -1625,7 +1670,7 @@ TEST(DequeOfUniqueTest, EraseIfSingleElementNotRemoved) {
 
 TEST(DequeOfUniqueTest, EraseIfWithStrings) {
   deque_of_unique<std::string> dou = {"apple", "banana", "cherry", "date"};
-  auto pred = [](const std::string &s) { return s[0] == 'b'; };
+  auto pred = [](const std::string& s) { return s[0] == 'b'; };
   size_t removed_count = erase_if(dou, pred);
   EXPECT_EQ(removed_count, 1);
   EXPECT_EQ(dou.size(), 3);
@@ -1634,7 +1679,7 @@ TEST(DequeOfUniqueTest, EraseIfWithStrings) {
 
 TEST(DequeOfUniqueTest, EraseIfWithComplexPredicate) {
   deque_of_unique<std::string> dou = {"apple", "banana", "cherry", "date"};
-  auto pred = [](const std::string &s) { return s.length() > 5; };
+  auto pred = [](const std::string& s) { return s.length() > 5; };
   size_t removed_count = erase_if(dou, pred);
   EXPECT_EQ(removed_count, 2);
   EXPECT_EQ(dou.size(), 2);
