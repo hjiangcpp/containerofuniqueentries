@@ -336,9 +336,10 @@ class deque_of_unique {
     if (set_.count(x) == 0) {
       return cend();
     }
+    auto eq = set_.key_eq();
     auto it = cbegin();
     while (it != cend()) {
-      if (*it == x) {
+      if (eq(*it, x)) {
         return it;
       }
       it++;
@@ -350,9 +351,10 @@ class deque_of_unique {
     if (set_.count(x) == 0) {
       return cend();
     }
+    auto eq = set_.key_eq();
     auto it = cbegin();
     while (it != cend()) {
-      if (*it == x) {
+      if (eq(*it, x)) {
         return it;
       }
       it++;
