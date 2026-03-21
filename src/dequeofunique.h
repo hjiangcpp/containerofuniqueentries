@@ -245,29 +245,6 @@ class deque_of_unique {
     return true;
   }
 
-#if __cplusplus >= 202302L
-  template <std::ranges::input_range R>
-  void prepend_range(R&& rng) {
-    // Collect elements not already in the container, deduplicating within the
-    // range while preserving first-occurrence order, then prepend in reverse.
-    std::unordered_set<std::ranges::range_value_t<R>, Hash, KeyEqual> pending;
-    std::deque<std::ranges::range_value_t<R>> tmp;
-    for (auto&& v : std::forward<R>(rng)) {
-      if (set_.count(v) == 0 && pending.insert(v).second) {
-        tmp.push_back(v);
-      }
-    }
-    for (auto it = tmp.rbegin(); it != tmp.rend(); ++it)
-      push_front(std::move(*it));
-  }
-
-  template <std::ranges::input_range R>
-  void append_range(R&& rng) {
-    for (auto&& v : std::forward<R>(rng))
-      push_back(std::forward<decltype(v)>(v));
-  }
-#endif
-
  private:
   template <class input_it>
   void _push_back(input_it first, input_it last) {
@@ -364,25 +341,6 @@ class deque_of_unique {
   }
 #endif
 
-  std::pair<const_iterator, const_iterator> equal_range(
-      const key_type& key) const {
-    auto it = find(key);
-    if (it == cend()) return {cend(), cend()};
-    return {it, it + 1};
-  }
-
-#if __cplusplus >= 202002L
-  template <class K>
-    requires requires {
-      typename Hash::is_transparent;
-      typename KeyEqual::is_transparent;
-    }
-  std::pair<const_iterator, const_iterator> equal_range(const K& x) const {
-    auto it = find(x);
-    if (it == cend()) return {cend(), cend()};
-    return {it, it + 1};
-  }
-#endif
 
   // Destructor
   ~deque_of_unique() = default;
