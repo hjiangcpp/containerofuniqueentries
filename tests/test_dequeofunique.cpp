@@ -8,6 +8,7 @@
 #include <deque>
 #include <numeric>
 #include <stdexcept>
+#include <string_view>
 #include <unordered_set>
 #include <utility>
 
@@ -154,8 +155,8 @@ TEST(DequeOfUniqueTest, MoveAssignmentIsNoexcept) {
   deque_of_unique<std::string> dou3;
 
   // Static assertion to check if the move assignment operator is noexcept
-  static_assert(noexcept(std::declval<deque_of_unique<std::string> &>() =
-                             std::declval<deque_of_unique<std::string> &&>()),
+  static_assert(noexcept(std::declval<deque_of_unique<std::string>&>() =
+                             std::declval<deque_of_unique<std::string>&&>()),
                 "Move assignment operator should be noexcept.");
 
   // Test empty dous
@@ -494,19 +495,19 @@ TEST(DequeOfUniqueTest, EmptyContainerIterators) {
 TEST(DequeOfUniqueTest, ConstCorrectness_Iterators) {
   deque_of_unique<int> dou = {1, 2, 3, 4};
 #if __cplusplus >= 202002L
-  EXPECT_TRUE((std::same_as<decltype(*dou.cbegin()), const int &>));
-  EXPECT_TRUE((std::same_as<decltype(*dou.cend()), const int &>));
-  EXPECT_TRUE((std::same_as<decltype(*dou.crbegin()), const int &>));
-  EXPECT_TRUE((std::same_as<decltype(*dou.crend()), const int &>));
+  EXPECT_TRUE((std::same_as<decltype(*dou.cbegin()), const int&>));
+  EXPECT_TRUE((std::same_as<decltype(*dou.cend()), const int&>));
+  EXPECT_TRUE((std::same_as<decltype(*dou.crbegin()), const int&>));
+  EXPECT_TRUE((std::same_as<decltype(*dou.crend()), const int&>));
 #else
   // NOLINTNEXTLINE(modernize-type-traits)
-  EXPECT_TRUE((std::is_same<decltype(*dou.cbegin()), const int &>::value));
+  EXPECT_TRUE((std::is_same<decltype(*dou.cbegin()), const int&>::value));
   // NOLINTNEXTLINE(modernize-type-traits)
-  EXPECT_TRUE((std::is_same<decltype(*dou.cend()), const int &>::value));
+  EXPECT_TRUE((std::is_same<decltype(*dou.cend()), const int&>::value));
   // NOLINTNEXTLINE(modernize-type-traits)
-  EXPECT_TRUE((std::is_same<decltype(*dou.crbegin()), const int &>::value));
+  EXPECT_TRUE((std::is_same<decltype(*dou.crbegin()), const int&>::value));
   // NOLINTNEXTLINE(modernize-type-traits)
-  EXPECT_TRUE((std::is_same<decltype(*dou.crend()), const int &>::value));
+  EXPECT_TRUE((std::is_same<decltype(*dou.crend()), const int&>::value));
 #endif
 }
 
@@ -537,7 +538,7 @@ TEST(DequeOfUniqueTest, BeginEnd_Iteration) {
 TEST(DequeOfUniqueTest, BeginEnd_RangeBasedFor) {
   deque_of_unique<int> dou = {1, 2, 3, 4};
   std::deque<int> result;
-  for (const auto &x : dou) {
+  for (const auto& x : dou) {
     result.push_back(x);
   }
   EXPECT_EQ(result, (std::deque<int>{1, 2, 3, 4}));
@@ -1491,6 +1492,45 @@ TEST(DequeOfUniqueTest, ContainsWithVariousIntTypes) {
   EXPECT_TRUE(dou.contains(int16_t(1)));
   EXPECT_FALSE(dou.contains(int16_t(4)));
 }
+
+// Heterogeneous lookup requires Hash::is_transparent.
+struct StringHash {
+  using is_transparent = void;
+  size_t operator()(std::string_view sv) const {
+    return std::hash<std::string_view>{}(sv);
+  }
+};
+
+struct StringEqual {
+  using is_transparent = void;
+  bool operator()(std::string_view a, std::string_view b) const {
+    return a == b;
+  }
+};
+
+// Positive: find<K> and contains<K> are available with a transparent Hash.
+TEST(DequeOfUniqueTest, Find_HeterogeneousLookup) {
+  deque_of_unique<std::string, StringHash, StringEqual> dou = {"hello",
+                                                               "world"};
+  std::string_view sv_found = "hello";
+  std::string_view sv_missing = "foo";
+
+  EXPECT_NE(dou.find(sv_found), dou.cend());
+  EXPECT_EQ(*dou.find(sv_found), "hello");
+  EXPECT_EQ(dou.find(sv_missing), dou.cend());
+  EXPECT_TRUE(dou.contains(sv_found));
+  EXPECT_FALSE(dou.contains(sv_missing));
+}
+
+// Negative: find<K>/contains<K> are not available without Hash::is_transparent.
+template <typename C, typename K>
+concept DequeCanFindWith = requires(const C& c, K k) { c.find(k); };
+template <typename C, typename K>
+concept DequeCanContainsWith = requires(const C& c, K k) { c.contains(k); };
+static_assert(
+    !DequeCanFindWith<deque_of_unique<std::string>, std::string_view>);
+static_assert(
+    !DequeCanContainsWith<deque_of_unique<std::string>, std::string_view>);
 #endif
 
 TEST(DequeOfUniqueTest, NonmemberEraseWithStrings) {
@@ -1625,7 +1665,7 @@ TEST(DequeOfUniqueTest, EraseIfSingleElementNotRemoved) {
 
 TEST(DequeOfUniqueTest, EraseIfWithStrings) {
   deque_of_unique<std::string> dou = {"apple", "banana", "cherry", "date"};
-  auto pred = [](const std::string &s) { return s[0] == 'b'; };
+  auto pred = [](const std::string& s) { return s[0] == 'b'; };
   size_t removed_count = erase_if(dou, pred);
   EXPECT_EQ(removed_count, 1);
   EXPECT_EQ(dou.size(), 3);
@@ -1634,7 +1674,7 @@ TEST(DequeOfUniqueTest, EraseIfWithStrings) {
 
 TEST(DequeOfUniqueTest, EraseIfWithComplexPredicate) {
   deque_of_unique<std::string> dou = {"apple", "banana", "cherry", "date"};
-  auto pred = [](const std::string &s) { return s.length() > 5; };
+  auto pred = [](const std::string& s) { return s.length() > 5; };
   size_t removed_count = erase_if(dou, pred);
   EXPECT_EQ(removed_count, 2);
   EXPECT_EQ(dou.size(), 2);
@@ -1647,3 +1687,113 @@ TEST(DequeOfUniqueTest, EraseIf_RemainingElementsPreserveOrder) {
   erase_if(dou, [](int x) { return x % 2 == 0; });
   EXPECT_EQ(dou.deque(), std::deque<int>({1, 3, 5}));
 }
+
+TEST(DequeOfUniqueTest, EqualRange_Found) {
+  deque_of_unique<int> dou = {10, 20, 30};
+  auto [lo, hi] = dou.equal_range(20);
+  ASSERT_NE(lo, dou.cend());
+  EXPECT_EQ(*lo, 20);
+  EXPECT_EQ(hi, lo + 1);
+}
+
+TEST(DequeOfUniqueTest, EqualRange_NotFound) {
+  deque_of_unique<int> dou = {10, 20, 30};
+  auto [lo, hi] = dou.equal_range(99);
+  EXPECT_EQ(lo, dou.cend());
+  EXPECT_EQ(hi, dou.cend());
+}
+
+TEST(DequeOfUniqueTest, EqualRange_Empty) {
+  deque_of_unique<int> dou;
+  auto [lo, hi] = dou.equal_range(1);
+  EXPECT_EQ(lo, dou.cend());
+  EXPECT_EQ(hi, dou.cend());
+}
+
+#if __cplusplus >= 202002L
+TEST(DequeOfUniqueTest, EqualRange_HeterogeneousLookup) {
+  deque_of_unique<std::string, StringHash, StringEqual> dou = {"hello",
+                                                               "world"};
+  auto [lo, hi] = dou.equal_range(std::string_view("hello"));
+  ASSERT_NE(lo, dou.cend());
+  EXPECT_EQ(*lo, "hello");
+  EXPECT_EQ(hi, lo + 1);
+
+  auto [lo2, hi2] = dou.equal_range(std::string_view("missing"));
+  EXPECT_EQ(lo2, dou.cend());
+  EXPECT_EQ(hi2, dou.cend());
+}
+#endif
+
+#if __cplusplus >= 202302L
+TEST(DequeOfUniqueTest, AssignRange_Basic) {
+  deque_of_unique<int> dou = {1, 2, 3};
+  std::vector<int> src = {4, 5, 6};
+  dou.assign_range(src);
+  EXPECT_EQ(dou.deque(), std::deque<int>({4, 5, 6}));
+}
+
+TEST(DequeOfUniqueTest, AssignRange_Deduplicates) {
+  deque_of_unique<int> dou;
+  std::vector<int> src = {1, 2, 2, 3, 1};
+  dou.assign_range(src);
+  EXPECT_EQ(dou.deque(), std::deque<int>({1, 2, 3}));
+}
+
+TEST(DequeOfUniqueTest, AssignRange_ClearsExisting) {
+  deque_of_unique<int> dou = {10, 20, 30};
+  std::vector<int> src = {1};
+  dou.assign_range(src);
+  EXPECT_EQ(dou.size(), 1);
+  EXPECT_EQ(dou.front(), 1);
+}
+
+TEST(DequeOfUniqueTest, InsertRange_Basic) {
+  deque_of_unique<int> dou = {1, 3};
+  std::vector<int> src = {2};
+  dou.insert_range(dou.cbegin() + 1, src);
+  EXPECT_EQ(dou.deque(), std::deque<int>({1, 2, 3}));
+}
+
+TEST(DequeOfUniqueTest, InsertRange_SkipsDuplicates) {
+  deque_of_unique<int> dou = {1, 2, 3};
+  std::vector<int> src = {2, 4};
+  dou.insert_range(dou.cend(), src);
+  EXPECT_EQ(dou.deque(), std::deque<int>({1, 2, 3, 4}));
+}
+
+TEST(DequeOfUniqueTest, AppendRange_Basic) {
+  deque_of_unique<int> dou = {1, 2};
+  std::vector<int> src = {3, 4};
+  dou.append_range(src);
+  EXPECT_EQ(dou.deque(), std::deque<int>({1, 2, 3, 4}));
+}
+
+TEST(DequeOfUniqueTest, AppendRange_SkipsDuplicates) {
+  deque_of_unique<int> dou = {1, 2};
+  std::vector<int> src = {2, 3};
+  dou.append_range(src);
+  EXPECT_EQ(dou.deque(), std::deque<int>({1, 2, 3}));
+}
+
+TEST(DequeOfUniqueTest, PrependRange_Basic) {
+  deque_of_unique<int> dou = {3, 4};
+  std::vector<int> src = {1, 2};
+  dou.prepend_range(src);
+  EXPECT_EQ(dou.deque(), std::deque<int>({1, 2, 3, 4}));
+}
+
+TEST(DequeOfUniqueTest, PrependRange_SkipsDuplicates) {
+  deque_of_unique<int> dou = {2, 3};
+  std::vector<int> src = {1, 2};
+  dou.prepend_range(src);
+  EXPECT_EQ(dou.deque(), std::deque<int>({1, 2, 3}));
+}
+
+TEST(DequeOfUniqueTest, PrependRange_PreservesOrder) {
+  deque_of_unique<int> dou = {4, 5};
+  std::vector<int> src = {1, 2, 3};
+  dou.prepend_range(src);
+  EXPECT_EQ(dou.deque(), std::deque<int>({1, 2, 3, 4, 5}));
+}
+#endif
