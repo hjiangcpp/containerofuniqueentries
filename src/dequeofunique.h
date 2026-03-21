@@ -341,7 +341,6 @@ class deque_of_unique {
   }
 #endif
 
-
   // Destructor
   ~deque_of_unique() = default;
 

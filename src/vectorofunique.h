@@ -299,7 +299,6 @@ class vector_of_unique {
   }
 #endif
 
-
   // Destructor
   ~vector_of_unique() = default;
 
