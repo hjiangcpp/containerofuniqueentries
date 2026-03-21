@@ -7,6 +7,7 @@
 #include <concepts>
 #include <numeric>
 #include <stdexcept>
+#include <string_view>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -1241,6 +1242,40 @@ TEST(VectorOfUniqueTest, ContainsWithVariousIntTypes) {
   EXPECT_TRUE(vou.contains(int16_t(1)));
   EXPECT_FALSE(vou.contains(int16_t(4)));
 }
+
+// Heterogeneous lookup requires Hash::is_transparent.
+struct StringHash {
+  using is_transparent = void;
+  size_t operator()(std::string_view sv) const {
+    return std::hash<std::string_view>{}(sv);
+  }
+};
+
+struct StringEqual {
+  using is_transparent = void;
+  bool operator()(std::string_view a, std::string_view b) const { return a == b; }
+};
+
+// Positive: find<K> and contains<K> are available with a transparent Hash.
+TEST(VectorOfUniqueTest, Find_HeterogeneousLookup) {
+  vector_of_unique<std::string, StringHash, StringEqual> vou = {"hello", "world"};
+  std::string_view sv_found = "hello";
+  std::string_view sv_missing = "foo";
+
+  EXPECT_NE(vou.find(sv_found), vou.cend());
+  EXPECT_EQ(*vou.find(sv_found), "hello");
+  EXPECT_EQ(vou.find(sv_missing), vou.cend());
+  EXPECT_TRUE(vou.contains(sv_found));
+  EXPECT_FALSE(vou.contains(sv_missing));
+}
+
+// Negative: find<K>/contains<K> are not available without Hash::is_transparent.
+template <typename C, typename K>
+concept VectorCanFindWith = requires(const C& c, K k) { c.find(k); };
+template <typename C, typename K>
+concept VectorCanContainsWith = requires(const C& c, K k) { c.contains(k); };
+static_assert(!VectorCanFindWith<vector_of_unique<std::string>, std::string_view>);
+static_assert(!VectorCanContainsWith<vector_of_unique<std::string>, std::string_view>);
 #endif
 
 TEST(VectorOfUniqueTest, NonmemberEraseWithStrings) {
