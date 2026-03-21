@@ -251,7 +251,22 @@ class vector_of_unique {
     return cend();
   }
 #else
+  const_iterator find(const T &x) const {
+    if (set_.count(x) == 0) {
+      return cend();
+    }
+    auto it = cbegin();
+    while (it != cend()) {
+      if (*it == x) {
+        return it;
+      }
+      it++;
+    }
+    return cend();
+  }
+
   template <class K>
+    requires requires { typename Hash::is_transparent; }
   const_iterator find(const K &x) const {
     if (set_.count(x) == 0) {
       return cend();
@@ -271,6 +286,7 @@ class vector_of_unique {
   bool contains(const key_type &key) const { return set_.contains(key); }
 
   template <class K>
+    requires requires { typename Hash::is_transparent; }
   bool contains(const K &x) const {
     return set_.contains(x);
   }
