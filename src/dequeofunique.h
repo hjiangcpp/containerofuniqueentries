@@ -331,7 +331,10 @@ class deque_of_unique {
   }
 
   template <class K>
-    requires requires { typename Hash::is_transparent; }
+    requires requires {
+      typename Hash::is_transparent;
+      typename KeyEqual::is_transparent;
+    }
   const_iterator find(const K& x) const {
     if (set_.count(x) == 0) {
       return cend();
@@ -352,7 +355,10 @@ class deque_of_unique {
   bool contains(const key_type& key) const { return set_.contains(key); }
 
   template <class K>
-    requires requires { typename Hash::is_transparent; }
+    requires requires {
+      typename Hash::is_transparent;
+      typename KeyEqual::is_transparent;
+    }
   bool contains(const K& x) const {
     return set_.contains(x);
   }
@@ -367,7 +373,10 @@ class deque_of_unique {
 
 #if __cplusplus >= 202002L
   template <class K>
-    requires requires { typename Hash::is_transparent; }
+    requires requires {
+      typename Hash::is_transparent;
+      typename KeyEqual::is_transparent;
+    }
   std::pair<const_iterator, const_iterator> equal_range(const K& x) const {
     auto it = find(x);
     if (it == cend()) return {cend(), cend()};
