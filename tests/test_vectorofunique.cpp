@@ -7,6 +7,7 @@
 #include <concepts>
 #include <numeric>
 #include <stdexcept>
+#include <string_view>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -154,8 +155,8 @@ TEST(VectorOfUniqueTest, MoveAssignmentIsNoexcept) {
   vector_of_unique<std::string> vou3;
 
   // Static assertion to check if the move assignment operator is noexcept
-  static_assert(noexcept(std::declval<vector_of_unique<std::string> &>() =
-                             std::declval<vector_of_unique<std::string> &&>()),
+  static_assert(noexcept(std::declval<vector_of_unique<std::string>&>() =
+                             std::declval<vector_of_unique<std::string>&&>()),
                 "Move assignment operator should be noexcept.");
 
   // Test empty vous
@@ -495,19 +496,19 @@ TEST(VectorOfUniqueTest, EmptyContainer_Iterators) {
 TEST(VectorOfUniqueTest, ConstCorrectness_Iterators) {
   vector_of_unique<int> vou = {1, 2, 3, 4};
 #if __cplusplus >= 202002L
-  EXPECT_TRUE((std::same_as<decltype(*vou.cbegin()), const int &>));
-  EXPECT_TRUE((std::same_as<decltype(*vou.cend()), const int &>));
-  EXPECT_TRUE((std::same_as<decltype(*vou.crbegin()), const int &>));
-  EXPECT_TRUE((std::same_as<decltype(*vou.crend()), const int &>));
+  EXPECT_TRUE((std::same_as<decltype(*vou.cbegin()), const int&>));
+  EXPECT_TRUE((std::same_as<decltype(*vou.cend()), const int&>));
+  EXPECT_TRUE((std::same_as<decltype(*vou.crbegin()), const int&>));
+  EXPECT_TRUE((std::same_as<decltype(*vou.crend()), const int&>));
 #else
   // NOLINTNEXTLINE(modernize-type-traits)
-  EXPECT_TRUE((std::is_same<decltype(*vou.cbegin()), const int &>::value));
+  EXPECT_TRUE((std::is_same<decltype(*vou.cbegin()), const int&>::value));
   // NOLINTNEXTLINE(modernize-type-traits)
-  EXPECT_TRUE((std::is_same<decltype(*vou.cend()), const int &>::value));
+  EXPECT_TRUE((std::is_same<decltype(*vou.cend()), const int&>::value));
   // NOLINTNEXTLINE(modernize-type-traits)
-  EXPECT_TRUE((std::is_same<decltype(*vou.crbegin()), const int &>::value));
+  EXPECT_TRUE((std::is_same<decltype(*vou.crbegin()), const int&>::value));
   // NOLINTNEXTLINE(modernize-type-traits)
-  EXPECT_TRUE((std::is_same<decltype(*vou.crend()), const int &>::value));
+  EXPECT_TRUE((std::is_same<decltype(*vou.crend()), const int&>::value));
 #endif
 }
 
@@ -539,7 +540,7 @@ TEST(VectorOfUniqueTest, BeginEnd_Iteration) {
 TEST(VectorOfUniqueTest, BeginEnd_RangeBasedFor) {
   vector_of_unique<int> vou = {1, 2, 3, 4};
   std::vector<int> result;
-  for (const auto &x : vou) {
+  for (const auto& x : vou) {
     result.push_back(x);
   }
   EXPECT_EQ(result, (std::vector<int>{1, 2, 3, 4}));
@@ -1241,6 +1242,51 @@ TEST(VectorOfUniqueTest, ContainsWithVariousIntTypes) {
   EXPECT_TRUE(vou.contains(int16_t(1)));
   EXPECT_FALSE(vou.contains(int16_t(4)));
 }
+
+// Heterogeneous lookup requires Hash::is_transparent.
+struct StringHash {
+  using is_transparent = void;
+  size_t operator()(std::string_view sv) const {
+    return std::hash<std::string_view>{}(sv);
+  }
+};
+
+struct StringEqual {
+  using is_transparent = void;
+  bool operator()(std::string_view a, std::string_view b) const {
+    return a == b;
+  }
+};
+
+// Positive: find<K> and contains<K> are available with a transparent Hash.
+TEST(VectorOfUniqueTest, Find_HeterogeneousLookup) {
+  vector_of_unique<std::string, StringHash, StringEqual> vou = {"hello",
+                                                                "world"};
+  std::string_view sv_found = "hello";
+  std::string_view sv_missing = "foo";
+
+  EXPECT_NE(vou.find(sv_found), vou.cend());
+  EXPECT_EQ(*vou.find(sv_found), "hello");
+  EXPECT_EQ(vou.find(sv_missing), vou.cend());
+  EXPECT_TRUE(vou.contains(sv_found));
+  EXPECT_FALSE(vou.contains(sv_missing));
+}
+
+// Negative: find<K>/contains<K> are not available without Hash::is_transparent.
+// Use a type with no implicit conversion to std::string so the non-transparent
+// find(const T&) overload cannot accept it via implicit conversion.
+struct VectorOpaqueKey {
+  std::string value;
+  explicit VectorOpaqueKey(const char* s) : value(s) {}
+};
+template <typename C, typename K>
+concept VectorCanFindWith = requires(const C& c, K k) { c.find(k); };
+template <typename C, typename K>
+concept VectorCanContainsWith = requires(const C& c, K k) { c.contains(k); };
+static_assert(
+    !VectorCanFindWith<vector_of_unique<std::string>, VectorOpaqueKey>);
+static_assert(
+    !VectorCanContainsWith<vector_of_unique<std::string>, VectorOpaqueKey>);
 #endif
 
 TEST(VectorOfUniqueTest, NonmemberEraseWithStrings) {
@@ -1375,7 +1421,7 @@ TEST(VectorOfUniqueTest, EraseIfSingleElementNotRemoved) {
 
 TEST(VectorOfUniqueTest, EraseIfWithStrings) {
   vector_of_unique<std::string> vou = {"apple", "banana", "cherry", "date"};
-  auto pred = [](const std::string &s) { return s[0] == 'b'; };
+  auto pred = [](const std::string& s) { return s[0] == 'b'; };
   size_t removed_count = erase_if(vou, pred);
   EXPECT_EQ(removed_count, 1);
   EXPECT_EQ(vou.size(), 3);
@@ -1384,7 +1430,7 @@ TEST(VectorOfUniqueTest, EraseIfWithStrings) {
 
 TEST(VectorOfUniqueTest, EraseIfWithComplexPredicate) {
   vector_of_unique<std::string> vou = {"apple", "banana", "cherry", "date"};
-  auto pred = [](const std::string &s) { return s.length() > 5; };
+  auto pred = [](const std::string& s) { return s.length() > 5; };
   size_t removed_count = erase_if(vou, pred);
   EXPECT_EQ(removed_count, 2);
   EXPECT_EQ(vou.size(), 2);
