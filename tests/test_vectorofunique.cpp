@@ -1559,11 +1559,13 @@ struct CaseInsensitiveHashV {
 
 struct CaseInsensitiveEqualV {
   bool operator()(const std::string& a, const std::string& b) const {
-    if (a.size() != b.size()) return false;
-    for (size_t i = 0; i < a.size(); ++i)
+    if (a.size() != b.size()) { return false; }
+    for (size_t i = 0; i < a.size(); ++i) {
       if (::tolower(static_cast<unsigned char>(a[i])) !=
-          ::tolower(static_cast<unsigned char>(b[i])))
+          ::tolower(static_cast<unsigned char>(b[i]))) {
         return false;
+      }
+    }
     return true;
   }
 };
@@ -1597,6 +1599,7 @@ TEST(VectorOfUniqueTest, CustomKeyEqual_MoveConstructor) {
   CaseInsensitiveVector v1 = {"hello", "World"};
   CaseInsensitiveVector v2 = std::move(v1);
   EXPECT_EQ(v2.vector(), (std::vector<std::string>{"hello", "World"}));
+  // NOLINTNEXTLINE(bugprone-use-after-move,clang-analyzer-cplusplus.Move,-warnings-as-errors)
   EXPECT_TRUE(v1.empty());
 }
 

@@ -1837,11 +1837,13 @@ struct CaseInsensitiveHash {
 
 struct CaseInsensitiveEqual {
   bool operator()(const std::string& a, const std::string& b) const {
-    if (a.size() != b.size()) return false;
-    for (size_t i = 0; i < a.size(); ++i)
+    if (a.size() != b.size()) { return false; }
+    for (size_t i = 0; i < a.size(); ++i) {
       if (::tolower(static_cast<unsigned char>(a[i])) !=
-          ::tolower(static_cast<unsigned char>(b[i])))
+          ::tolower(static_cast<unsigned char>(b[i]))) {
         return false;
+      }
+    }
     return true;
   }
 };
@@ -1875,6 +1877,7 @@ TEST(DequeOfUniqueTest, CustomKeyEqual_MoveConstructor) {
   CaseInsensitiveDeque d1 = {"hello", "World"};
   CaseInsensitiveDeque d2 = std::move(d1);
   EXPECT_EQ(d2.deque(), (std::deque<std::string>{"hello", "World"}));
+  // NOLINTNEXTLINE(bugprone-use-after-move,clang-analyzer-cplusplus.Move,-warnings-as-errors)
   EXPECT_TRUE(d1.empty());
 }
 
