@@ -1748,6 +1748,13 @@ TEST(DequeOfUniqueTest, AssignRange_ClearsExisting) {
   EXPECT_EQ(dou.front(), 1);
 }
 
+TEST(DequeOfUniqueTest, AssignRange_IntraRangeDuplicates) {
+  deque_of_unique<int> dou;
+  std::vector<int> src = {1, 2, 1, 3, 2};
+  dou.assign_range(src);
+  EXPECT_EQ(dou.deque(), std::deque<int>({1, 2, 3}));
+}
+
 TEST(DequeOfUniqueTest, InsertRange_Basic) {
   deque_of_unique<int> dou = {1, 3};
   std::vector<int> src = {2};
@@ -1759,6 +1766,13 @@ TEST(DequeOfUniqueTest, InsertRange_SkipsDuplicates) {
   deque_of_unique<int> dou = {1, 2, 3};
   std::vector<int> src = {2, 4};
   dou.insert_range(dou.cend(), src);
+  EXPECT_EQ(dou.deque(), std::deque<int>({1, 2, 3, 4}));
+}
+
+TEST(DequeOfUniqueTest, InsertRange_IntraRangeDuplicates) {
+  deque_of_unique<int> dou = {1, 4};
+  std::vector<int> src = {2, 3, 2};
+  dou.insert_range(dou.cbegin() + 1, src);
   EXPECT_EQ(dou.deque(), std::deque<int>({1, 2, 3, 4}));
 }
 
@@ -1774,6 +1788,13 @@ TEST(DequeOfUniqueTest, AppendRange_SkipsDuplicates) {
   std::vector<int> src = {2, 3};
   dou.append_range(src);
   EXPECT_EQ(dou.deque(), std::deque<int>({1, 2, 3}));
+}
+
+TEST(DequeOfUniqueTest, AppendRange_IntraRangeDuplicates) {
+  deque_of_unique<int> dou = {1, 2};
+  std::vector<int> src = {3, 4, 3};
+  dou.append_range(src);
+  EXPECT_EQ(dou.deque(), std::deque<int>({1, 2, 3, 4}));
 }
 
 TEST(DequeOfUniqueTest, PrependRange_Basic) {
@@ -1830,6 +1851,7 @@ using CaseInsensitiveDeque =
 
 TEST(DequeOfUniqueTest, CustomKeyEqual_CopyConstructor) {
   CaseInsensitiveDeque d1 = {"hello", "World"};
+  // NOLINTNEXTLINE(performance-unnecessary-copy-initialization)
   CaseInsensitiveDeque d2 = d1;
   EXPECT_EQ(d2.deque(), d1.deque());
   EXPECT_EQ(d2.size(), 2u);
@@ -1837,6 +1859,7 @@ TEST(DequeOfUniqueTest, CustomKeyEqual_CopyConstructor) {
 
 TEST(DequeOfUniqueTest, CustomKeyEqual_CopyConstructorRejectsDuplicates) {
   CaseInsensitiveDeque d1 = {"hello", "HELLO", "World"};
+  // NOLINTNEXTLINE(performance-unnecessary-copy-initialization)
   CaseInsensitiveDeque d2 = d1;
   EXPECT_EQ(d2.deque(), (std::deque<std::string>{"hello", "World"}));
 }
@@ -1847,3 +1870,78 @@ TEST(DequeOfUniqueTest, CustomKeyEqual_CopyAssignment) {
   d2 = d1;
   EXPECT_EQ(d2.deque(), d1.deque());
 }
+
+TEST(DequeOfUniqueTest, CustomKeyEqual_MoveConstructor) {
+  CaseInsensitiveDeque d1 = {"hello", "World"};
+  CaseInsensitiveDeque d2 = std::move(d1);
+  EXPECT_EQ(d2.deque(), (std::deque<std::string>{"hello", "World"}));
+  EXPECT_TRUE(d1.empty());
+}
+
+TEST(DequeOfUniqueTest, CustomKeyEqual_PushBack) {
+  CaseInsensitiveDeque d;
+  EXPECT_TRUE(d.push_back("hello"));
+  EXPECT_FALSE(d.push_back("HELLO"));
+  EXPECT_FALSE(d.push_back("Hello"));
+  EXPECT_EQ(d.size(), 1u);
+}
+
+TEST(DequeOfUniqueTest, CustomKeyEqual_PushFront) {
+  CaseInsensitiveDeque d;
+  EXPECT_TRUE(d.push_front("hello"));
+  EXPECT_FALSE(d.push_front("HELLO"));
+  EXPECT_FALSE(d.push_front("Hello"));
+  EXPECT_EQ(d.size(), 1u);
+}
+
+TEST(DequeOfUniqueTest, CustomKeyEqual_Find) {
+  CaseInsensitiveDeque d = {"hello", "World"};
+  EXPECT_NE(d.find(std::string("HELLO")), d.cend());
+  EXPECT_NE(d.find(std::string("world")), d.cend());
+  EXPECT_EQ(d.find(std::string("missing")), d.cend());
+}
+
+#if __cplusplus >= 202002L
+TEST(DequeOfUniqueTest, CustomKeyEqual_Contains) {
+  CaseInsensitiveDeque d = {"hello", "World"};
+  EXPECT_TRUE(d.contains(std::string("HELLO")));
+  EXPECT_TRUE(d.contains(std::string("world")));
+  EXPECT_FALSE(d.contains(std::string("missing")));
+}
+#endif
+
+TEST(DequeOfUniqueTest, CustomKeyEqual_Erase) {
+  CaseInsensitiveDeque d = {"hello", "World", "foo"};
+  erase(d, std::string("HELLO"));
+  EXPECT_EQ(d.deque(), (std::deque<std::string>{"World", "foo"}));
+}
+
+#if __cplusplus >= 202302L
+TEST(DequeOfUniqueTest, AssignRange_EmptyRange) {
+  deque_of_unique<int> dou = {1, 2, 3};
+  std::vector<int> src;
+  dou.assign_range(src);
+  EXPECT_TRUE(dou.empty());
+}
+
+TEST(DequeOfUniqueTest, InsertRange_EmptyRange) {
+  deque_of_unique<int> dou = {1, 3};
+  std::vector<int> src;
+  dou.insert_range(dou.cbegin() + 1, src);
+  EXPECT_EQ(dou.deque(), std::deque<int>({1, 3}));
+}
+
+TEST(DequeOfUniqueTest, AppendRange_EmptyRange) {
+  deque_of_unique<int> dou = {1, 2};
+  std::vector<int> src;
+  dou.append_range(src);
+  EXPECT_EQ(dou.deque(), std::deque<int>({1, 2}));
+}
+
+TEST(DequeOfUniqueTest, PrependRange_EmptyRange) {
+  deque_of_unique<int> dou = {1, 2};
+  std::vector<int> src;
+  dou.prepend_range(src);
+  EXPECT_EQ(dou.deque(), std::deque<int>({1, 2}));
+}
+#endif

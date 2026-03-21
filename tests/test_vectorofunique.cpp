@@ -1498,6 +1498,13 @@ TEST(VectorOfUniqueTest, AssignRange_ClearsExisting) {
   EXPECT_EQ(vou.front(), 1);
 }
 
+TEST(VectorOfUniqueTest, AssignRange_IntraRangeDuplicates) {
+  vector_of_unique<int> vou;
+  std::vector<int> src = {1, 2, 1, 3, 2};
+  vou.assign_range(src);
+  EXPECT_EQ(vou.vector(), std::vector<int>({1, 2, 3}));
+}
+
 TEST(VectorOfUniqueTest, InsertRange_Basic) {
   vector_of_unique<int> vou = {1, 3};
   std::vector<int> src = {2};
@@ -1509,6 +1516,13 @@ TEST(VectorOfUniqueTest, InsertRange_SkipsDuplicates) {
   vector_of_unique<int> vou = {1, 2, 3};
   std::vector<int> src = {2, 4};
   vou.insert_range(vou.cend(), src);
+  EXPECT_EQ(vou.vector(), std::vector<int>({1, 2, 3, 4}));
+}
+
+TEST(VectorOfUniqueTest, InsertRange_IntraRangeDuplicates) {
+  vector_of_unique<int> vou = {1, 4};
+  std::vector<int> src = {2, 3, 2};
+  vou.insert_range(vou.cbegin() + 1, src);
   EXPECT_EQ(vou.vector(), std::vector<int>({1, 2, 3, 4}));
 }
 
@@ -1524,6 +1538,13 @@ TEST(VectorOfUniqueTest, AppendRange_SkipsDuplicates) {
   std::vector<int> src = {2, 3};
   vou.append_range(src);
   EXPECT_EQ(vou.vector(), std::vector<int>({1, 2, 3}));
+}
+
+TEST(VectorOfUniqueTest, AppendRange_IntraRangeDuplicates) {
+  vector_of_unique<int> vou = {1, 2};
+  std::vector<int> src = {3, 4, 3};
+  vou.append_range(src);
+  EXPECT_EQ(vou.vector(), std::vector<int>({1, 2, 3, 4}));
 }
 #endif
 
@@ -1552,6 +1573,7 @@ using CaseInsensitiveVector =
 
 TEST(VectorOfUniqueTest, CustomKeyEqual_CopyConstructor) {
   CaseInsensitiveVector v1 = {"hello", "World"};
+  // NOLINTNEXTLINE(performance-unnecessary-copy-initialization)
   CaseInsensitiveVector v2 = v1;
   EXPECT_EQ(v2.vector(), v1.vector());
   EXPECT_EQ(v2.size(), 2u);
@@ -1559,6 +1581,7 @@ TEST(VectorOfUniqueTest, CustomKeyEqual_CopyConstructor) {
 
 TEST(VectorOfUniqueTest, CustomKeyEqual_CopyConstructorRejectsDuplicates) {
   CaseInsensitiveVector v1 = {"hello", "HELLO", "World"};
+  // NOLINTNEXTLINE(performance-unnecessary-copy-initialization)
   CaseInsensitiveVector v2 = v1;
   EXPECT_EQ(v2.vector(), (std::vector<std::string>{"hello", "World"}));
 }
@@ -1569,3 +1592,63 @@ TEST(VectorOfUniqueTest, CustomKeyEqual_CopyAssignment) {
   v2 = v1;
   EXPECT_EQ(v2.vector(), v1.vector());
 }
+
+TEST(VectorOfUniqueTest, CustomKeyEqual_MoveConstructor) {
+  CaseInsensitiveVector v1 = {"hello", "World"};
+  CaseInsensitiveVector v2 = std::move(v1);
+  EXPECT_EQ(v2.vector(), (std::vector<std::string>{"hello", "World"}));
+  EXPECT_TRUE(v1.empty());
+}
+
+TEST(VectorOfUniqueTest, CustomKeyEqual_PushBack) {
+  CaseInsensitiveVector v;
+  EXPECT_TRUE(v.push_back("hello"));
+  EXPECT_FALSE(v.push_back("HELLO"));
+  EXPECT_FALSE(v.push_back("Hello"));
+  EXPECT_EQ(v.size(), 1u);
+}
+
+TEST(VectorOfUniqueTest, CustomKeyEqual_Find) {
+  CaseInsensitiveVector v = {"hello", "World"};
+  EXPECT_NE(v.find(std::string("HELLO")), v.cend());
+  EXPECT_NE(v.find(std::string("world")), v.cend());
+  EXPECT_EQ(v.find(std::string("missing")), v.cend());
+}
+
+#if __cplusplus >= 202002L
+TEST(VectorOfUniqueTest, CustomKeyEqual_Contains) {
+  CaseInsensitiveVector v = {"hello", "World"};
+  EXPECT_TRUE(v.contains(std::string("HELLO")));
+  EXPECT_TRUE(v.contains(std::string("world")));
+  EXPECT_FALSE(v.contains(std::string("missing")));
+}
+#endif
+
+TEST(VectorOfUniqueTest, CustomKeyEqual_Erase) {
+  CaseInsensitiveVector v = {"hello", "World", "foo"};
+  erase(v, std::string("HELLO"));
+  EXPECT_EQ(v.vector(), (std::vector<std::string>{"World", "foo"}));
+}
+
+#if __cplusplus >= 202302L
+TEST(VectorOfUniqueTest, AssignRange_EmptyRange) {
+  vector_of_unique<int> vou = {1, 2, 3};
+  std::vector<int> src;
+  vou.assign_range(src);
+  EXPECT_TRUE(vou.empty());
+}
+
+TEST(VectorOfUniqueTest, InsertRange_EmptyRange) {
+  vector_of_unique<int> vou = {1, 3};
+  std::vector<int> src;
+  vou.insert_range(vou.cbegin() + 1, src);
+  EXPECT_EQ(vou.vector(), std::vector<int>({1, 3}));
+}
+
+TEST(VectorOfUniqueTest, AppendRange_EmptyRange) {
+  vector_of_unique<int> vou = {1, 2};
+  std::vector<int> src;
+  vou.append_range(src);
+  EXPECT_EQ(vou.vector(), std::vector<int>({1, 2}));
+}
+#endif
